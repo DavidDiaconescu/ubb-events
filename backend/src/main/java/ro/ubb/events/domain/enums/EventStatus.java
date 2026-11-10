@@ -1,0 +1,5 @@
+package ro.ubb.events.domain.enums;
+
+public enum EventStatus {
+    DRAFT, PENDING_APPROVAL, APPROVED, PUBLISHED, REGISTRATION_CLOSED, ONGOING, FINISHED, ARCHIVED, CANCELLED
+}
