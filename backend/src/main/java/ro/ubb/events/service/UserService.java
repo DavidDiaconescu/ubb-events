@@ -51,6 +51,8 @@ public class UserService {
         user.setFaculty(request.faculty());
         user.setStudyYear(request.studyYear());
         user.setGlobalRole(GlobalRole.USER);
+        // TODO BR-28: accounts should be activated through a link sent to the institutional e-mail;
+        //  until that flow exists, new accounts are enabled immediately.
         user.setEnabled(true);
 
         return UserResponse.from(userRepository.save(user));
@@ -81,7 +83,7 @@ public class UserService {
     /**
      * Emails are stored in lower case so that uniqueness does not depend on letter case.
      */
-    private static String normalizeEmail(String email) {
+    public static String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
     }
 }
