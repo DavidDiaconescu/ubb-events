@@ -1,5 +1,6 @@
 "use client";
 
+import { Megaphone } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ export function AnnouncementsTab({ event }: { event: UbbEvent }) {
     <div className="grid gap-6 lg:grid-cols-3">
       <CardSection title="Sent announcements" className="lg:col-span-2">
         {announcements.length === 0 ? (
-          <EmptyState title="No announcements yet" />
+          <EmptyState icon={Megaphone} title="No announcements yet" />
         ) : (
           <ul className="space-y-4">
             {announcements.map((announcement) => (
@@ -96,6 +97,7 @@ function NewAnnouncementForm({ event }: { event: UbbEvent }) {
           </Select>
         </Field>
         <Button type="submit" className="w-full" disabled={title.trim() === "" || content.trim() === ""}>
+          <Megaphone className="size-4" aria-hidden="true" />
           Send announcement
         </Button>
       </form>

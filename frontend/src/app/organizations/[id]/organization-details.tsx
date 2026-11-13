@@ -1,5 +1,6 @@
 "use client";
 
+import { CalendarDays } from "lucide-react";
 import { use } from "react";
 import { EventCard } from "@/components/event-card";
 import { MembershipButton } from "@/components/membership-button";
@@ -8,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { CardSection } from "@/components/ui/card";
 import { EmptyState, Notice } from "@/components/ui/feedback";
 import { PageHeader } from "@/components/ui/page-header";
-import { fullName } from "@/lib/format";
+import { fullName, initials } from "@/lib/format";
 import { useNow } from "@/lib/hooks";
 import { ORG_ROLE_LABELS } from "@/lib/labels";
 import { isVisibleToParticipants } from "@/lib/permissions";
@@ -74,9 +75,9 @@ export function OrganizationDetails({ params }: { params: Promise<{ id: string }
           <section>
             <h2 className="mb-4 text-base font-semibold">Upcoming events</h2>
             {upcomingEvents.length === 0 ? (
-              <EmptyState title="No upcoming events" />
+              <EmptyState icon={CalendarDays} title="No upcoming events" />
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {upcomingEvents.map((event) => (
                   <EventCard key={event.id} event={event} />
                 ))}
@@ -89,7 +90,15 @@ export function OrganizationDetails({ params }: { params: Promise<{ id: string }
           <ul className="space-y-2.5">
             {members.map(({ membership, user }) => (
               <li key={membership.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="truncate">{fullName(user)}</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  <span
+                    className="grid size-7 shrink-0 place-items-center rounded-full bg-primary-soft text-[11px] font-semibold text-primary"
+                    aria-hidden="true"
+                  >
+                    {initials(user)}
+                  </span>
+                  <span className="truncate">{fullName(user)}</span>
+                </span>
                 {membership.role === "COORDINATOR" && <Badge tone="blue">{ORG_ROLE_LABELS.COORDINATOR}</Badge>}
               </li>
             ))}

@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,10 @@ export function OrganizersTab({ event }: { event: UbbEvent }) {
                   <span className="font-medium">{name}</span>
                   <Badge tone={organizer.role === "LEAD" ? "blue" : "neutral"}>{ORGANIZER_ROLE_LABELS[organizer.role]}</Badge>
                 </div>
-                <Button size="sm" variant="ghost" onClick={() => handleRemove(organizer.id, name)}>Remove</Button>
+                <Button size="sm" variant="ghost" onClick={() => handleRemove(organizer.id, name)}>
+                  <Trash2 className="size-4" aria-hidden="true" />
+                  Remove
+                </Button>
               </li>
             );
           })}
@@ -94,7 +98,10 @@ function AddOrganizerForm({ event }: { event: UbbEvent }) {
             <option value="LEAD">{ORGANIZER_ROLE_LABELS.LEAD}</option>
           </Select>
         </Field>
-        <Button type="submit" disabled={userId === ""}>Add to team</Button>
+        <Button type="submit" disabled={userId === ""}>
+          <Plus className="size-4" aria-hidden="true" />
+          Add to team
+        </Button>
       </form>
     </CardSection>
   );

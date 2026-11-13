@@ -1,5 +1,6 @@
 "use client";
 
+import { ListTodo, Megaphone, MessageSquare, Pencil, UserCog, Users } from "lucide-react";
 import { use, useState } from "react";
 import { NotFoundMessage, parseId } from "@/components/not-found-message";
 import { EventStatusBadge } from "@/components/status-badges";
@@ -63,7 +64,10 @@ function ManageEventWorkspace({ event }: { event: UbbEvent }) {
           <>
             <ButtonLink href={`/events/${event.id}`} variant="secondary" size="sm">View public page</ButtonLink>
             {EDITABLE_STATUSES.includes(event.status) && (
-              <ButtonLink href={`/manage/events/${event.id}/edit`} size="sm">Edit details</ButtonLink>
+              <ButtonLink href={`/manage/events/${event.id}/edit`} size="sm">
+                <Pencil className="size-4" aria-hidden="true" />
+                Edit details
+              </ButtonLink>
             )}
           </>
         }
@@ -83,11 +87,11 @@ function ManageEventWorkspace({ event }: { event: UbbEvent }) {
         activeTab={activeTab}
         onChange={setActiveTab}
         tabs={[
-          { id: "participants", label: "Participants", count: registrationCount },
-          { id: "organizers", label: "Organizers", count: organizerCount },
-          { id: "tasks", label: "Tasks", count: tasks.length },
-          { id: "announcements", label: "Announcements", count: announcementCount },
-          { id: "feedback", label: "Feedback", count: feedbackCount },
+          { id: "participants", label: "Participants", count: registrationCount, icon: Users },
+          { id: "organizers", label: "Organizers", count: organizerCount, icon: UserCog },
+          { id: "tasks", label: "Tasks", count: tasks.length, icon: ListTodo },
+          { id: "announcements", label: "Announcements", count: announcementCount, icon: Megaphone },
+          { id: "feedback", label: "Feedback", count: feedbackCount, icon: MessageSquare },
         ]}
       />
 

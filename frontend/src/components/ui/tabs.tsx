@@ -1,9 +1,12 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
+
 export interface TabItem<T extends string> {
   id: T;
   label: string;
   count?: number;
+  icon?: LucideIcon;
 }
 
 interface TabsProps<T extends string> {
@@ -24,13 +27,22 @@ export function Tabs<T extends string>({ tabs, activeTab, onChange }: TabsProps<
             role="tab"
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
-            className={`-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${
-              isActive ? "border-primary text-primary" : "border-transparent text-muted hover:text-foreground"
+            className={`-mb-px inline-flex items-center whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary ${
+              isActive
+                ? "border-primary text-primary"
+                : "border-transparent text-muted hover:border-border hover:text-foreground"
             }`}
           >
+            {tab.icon && <tab.icon className="mr-1.5 size-4" aria-hidden="true" />}
             {tab.label}
             {tab.count !== undefined && (
-              <span className="ml-1.5 rounded-full bg-surface-muted px-1.5 py-0.5 text-xs text-muted">{tab.count}</span>
+              <span
+                className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs tabular-nums ${
+                  isActive ? "bg-primary-soft text-primary" : "bg-surface-muted text-muted"
+                }`}
+              >
+                {tab.count}
+              </span>
             )}
           </button>
         );

@@ -1,5 +1,6 @@
 "use client";
 
+import { ListTodo, Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { CardSection } from "@/components/ui/card";
@@ -25,7 +26,7 @@ export function TasksTab({ event }: { event: UbbEvent }) {
     <div className="grid gap-6 lg:grid-cols-3">
       <CardSection title="Tasks" description="Responsibilities of the organizing team." className="lg:col-span-2">
         {tasks.length === 0 ? (
-          <EmptyState title="No tasks yet" description="Split the preparation work between the organizers." />
+          <EmptyState icon={ListTodo} title="No tasks yet" description="Split the preparation work between the organizers." />
         ) : (
           <ul className="divide-y divide-border">
             {tasks.map((task) => <TaskRow key={task.id} task={task} />)}
@@ -68,6 +69,7 @@ function TaskRow({ task }: { task: Task }) {
           aria-label={`Delete ${task.title}`}
           onClick={() => runAction(() => deleteTask(task.id), "The task was deleted.")}
         >
+          <Trash2 className="size-4" aria-hidden="true" />
           Delete
         </Button>
       </div>
@@ -120,7 +122,10 @@ function NewTaskForm({ event }: { event: UbbEvent }) {
             onChange={(changeEvent) => setDescription(changeEvent.target.value)}
           />
         </Field>
-        <Button type="submit" className="w-full" disabled={title.trim() === "" || assigneeId === ""}>Create task</Button>
+        <Button type="submit" className="w-full" disabled={title.trim() === "" || assigneeId === ""}>
+          <Plus className="size-4" aria-hidden="true" />
+          Create task
+        </Button>
       </form>
     </CardSection>
   );

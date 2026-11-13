@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight, CalendarCheck, Hourglass, QrCode } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { CapacityMeter } from "@/components/capacity-meter";
@@ -89,7 +90,10 @@ function ActiveRegistration({ event, registration }: { event: UbbEvent; registra
             Show this code to the organizers at the entrance.
           </Notice>
           <div className="rounded-lg border border-dashed border-border bg-surface-muted py-4 text-center">
-            <p className="text-xs uppercase tracking-wide text-muted">Check-in code</p>
+            <p className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted">
+              <QrCode className="size-4" aria-hidden="true" />
+              Check-in code
+            </p>
             <p className="mt-1 font-mono text-2xl font-semibold tracking-wider">{registration.checkInCode}</p>
           </div>
         </>
@@ -168,8 +172,12 @@ function RegisterAction({ event, userId }: { event: UbbEvent; userId: number }) 
         <p className="text-muted">
           Only members of {organizationName(state, event.organizationId)} can register for this event.
         </p>
-        <Link href={`/organizations/${event.organizationId}`} className="font-medium text-primary hover:underline">
-          View the organization →
+        <Link
+          href={`/organizations/${event.organizationId}`}
+          className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
+        >
+          View the organization
+          <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
       </div>
     );
@@ -191,7 +199,10 @@ function RegisterAction({ event, userId }: { event: UbbEvent; userId: number }) 
           The event is full. Join the waitlist and you will be confirmed automatically if a place becomes available.
         </p>
       )}
-      <Button className="w-full" onClick={handleRegister}>{isFull ? "Join the waitlist" : "Register"}</Button>
+      <Button className="w-full" onClick={handleRegister}>
+        {isFull ? <Hourglass className="size-4" aria-hidden="true" /> : <CalendarCheck className="size-4" aria-hidden="true" />}
+        {isFull ? "Join the waitlist" : "Register"}
+      </Button>
       <p className="text-center text-xs text-muted">Registration closes {formatDateTime(event.registrationClosesAt)}</p>
     </div>
   );
