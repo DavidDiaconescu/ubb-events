@@ -1,44 +1,31 @@
 @import "tailwindcss";
 
-/* Design tokens. Components use them through Tailwind classes such as bg-surface or text-muted. */
+/* Design tokens (light theme only). Components use them through Tailwind classes such as bg-surface or text-muted. */
 :root {
-  --background: #f5f6fa;
+  --background: #ffffff;
   --surface: #ffffff;
-  --surface-muted: #eef1f7;
-  --border: #dfe3ec;
-  --foreground: #141a29;
-  --muted: #5a6478;
-  --primary: #1d4ea3;
-  --primary-hover: #173f86;
+  --surface-muted: #f8fafc;
+  --border: #e2e8f0;
+  --foreground: #0f172a;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
   --primary-foreground: #ffffff;
-  --primary-soft: #e6edfa;
-  --danger: #b42323;
-  --danger-soft: #fdecec;
-  --success: #17803d;
-  --success-soft: #e7f6ec;
-  --warning: #9a5b00;
-  --warning-soft: #fff4e0;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0d111a;
-    --surface: #151b27;
-    --surface-muted: #1c2433;
-    --border: #2a3345;
-    --foreground: #e8ecf4;
-    --muted: #9aa5ba;
-    --primary: #6b9bf0;
-    --primary-hover: #8ab0f4;
-    --primary-foreground: #0b1222;
-    --primary-soft: #1a2a48;
-    --danger: #f08080;
-    --danger-soft: #3a1a1d;
-    --success: #6fd394;
-    --success-soft: #143222;
-    --warning: #f2b85c;
-    --warning-soft: #3a2a12;
-  }
+  --primary-soft: #eff6ff;
+  /* Orange accent: backgrounds and icons only; use --accent-foreground for text. */
+  --accent: #f97316;
+  --accent-foreground: #c2410c;
+  --accent-soft: #fff7ed;
+  --success: #15803d;
+  --success-soft: #f0fdf4;
+  --warning: #b45309;
+  --warning-soft: #fffbeb;
+  --danger: #dc2626;
+  /* Text on --danger-soft: #dc2626 on #fef2f2 is below 4.5:1. */
+  --danger-foreground: #b91c1c;
+  --danger-soft: #fef2f2;
+  --info: #6d28d9;
+  --info-soft: #f5f3ff;
 }
 
 @theme inline {
@@ -52,12 +39,18 @@
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-soft: var(--primary-soft);
-  --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

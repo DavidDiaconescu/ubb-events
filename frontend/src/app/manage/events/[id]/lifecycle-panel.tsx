@@ -83,7 +83,7 @@ export function LifecyclePanel({ event }: { event: UbbEvent }) {
       </div>
 
       {isCancelling && (
-        <div className="mt-4 space-y-3 rounded-lg border border-danger/30 bg-danger-soft p-4">
+        <div className="mt-4 space-y-3 rounded-lg border border-danger/40 border-l-4 border-l-danger bg-surface p-4">
           <Field
             label="Why is the event cancelled?"
             htmlFor="cancellation-reason"

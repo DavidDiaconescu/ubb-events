@@ -1,9 +1,11 @@
 "use client";
 
+import { Clock, MapPin } from "lucide-react";
 import Link from "next/link";
 import { CapacityMeter } from "@/components/capacity-meter";
 import { CategoryBadge, EventStatusBadge } from "@/components/status-badges";
 import { Badge } from "@/components/ui/badge";
+import { CARD_CLASSES, INTERACTIVE_CARD_CLASSES } from "@/components/ui/card";
 import { formatDayAndMonth, formatEventTime } from "@/lib/format";
 import { countRegistrations, countTakenPlaces, organizationName, venueLabel } from "@/lib/queries";
 import { useAppState } from "@/lib/store";
@@ -19,7 +21,7 @@ export function EventCard({ event }: { event: UbbEvent }) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className="group flex flex-col rounded-xl border border-border bg-surface p-5 transition-shadow hover:shadow-md hover:shadow-black/5"
+      className={`group flex flex-col p-5 ${CARD_CLASSES} ${INTERACTIVE_CARD_CLASSES}`}
     >
       <div className="flex items-start gap-4">
         <div className="flex w-12 shrink-0 flex-col items-center rounded-lg bg-primary-soft py-1.5 text-primary">
@@ -39,13 +41,19 @@ export function EventCard({ event }: { event: UbbEvent }) {
       </div>
 
       <dl className="mt-3 space-y-1 text-sm text-muted">
-        <div>
-          <dt className="sr-only">When</dt>
+        <div className="flex items-center gap-2">
+          <dt>
+            <Clock className="size-4 shrink-0" aria-hidden="true" />
+            <span className="sr-only">When</span>
+          </dt>
           <dd>{formatEventTime(event.startTime, event.endTime)}</dd>
         </div>
-        <div>
-          <dt className="sr-only">Where</dt>
-          <dd className="truncate">{venueLabel(state, event.venueId)}</dd>
+        <div className="flex items-center gap-2">
+          <dt>
+            <MapPin className="size-4 shrink-0" aria-hidden="true" />
+            <span className="sr-only">Where</span>
+          </dt>
+          <dd className="min-w-0 truncate">{venueLabel(state, event.venueId)}</dd>
         </div>
       </dl>
 

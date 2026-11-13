@@ -1,5 +1,6 @@
 "use client";
 
+import { Search, SearchX, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { EventCard } from "@/components/event-card";
 import { Button } from "@/components/ui/button";
@@ -81,16 +82,22 @@ export function EventBrowser() {
         description="Find workshops, conferences, trainings and more organized by UBB student organizations."
       />
 
-      <div className="mb-6 rounded-xl border border-border bg-surface p-4">
+      <div className="mb-6 rounded-xl border border-border bg-surface p-4 shadow-sm">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Input
-            type="search"
-            placeholder="Search by title, topic or organization"
-            aria-label="Search events"
-            value={filters.search}
-            onChange={(event) => updateFilter("search", event.target.value)}
-            className="lg:col-span-2"
-          />
+          <div className="relative lg:col-span-2">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted"
+              aria-hidden="true"
+            />
+            <Input
+              type="search"
+              placeholder="Search by title, topic or organization"
+              aria-label="Search events"
+              value={filters.search}
+              onChange={(event) => updateFilter("search", event.target.value)}
+              className="pl-9"
+            />
+          </div>
           <Select
             aria-label="Category"
             value={filters.category}
@@ -141,6 +148,7 @@ export function EventBrowser() {
           />
           {hasActiveFilters && (
             <Button variant="ghost" size="sm" onClick={() => setFilters(DEFAULT_FILTERS)} className="ml-auto">
+              <SlidersHorizontal className="size-4" aria-hidden="true" />
               Clear filters
             </Button>
           )}
@@ -152,9 +160,9 @@ export function EventBrowser() {
       </p>
 
       {visibleEvents.length === 0 ? (
-        <EmptyState title="No events match your filters" description="Try another category or a broader search." />
+        <EmptyState icon={SearchX} title="No events match your filters" description="Try another category or a broader search." />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visibleEvents.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}

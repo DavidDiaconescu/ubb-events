@@ -1,3 +1,4 @@
+import { ArrowLeft, SearchX } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/feedback";
 
@@ -5,9 +6,15 @@ import { EmptyState } from "@/components/ui/feedback";
 export function NotFoundMessage({ title, backHref, backLabel }: { title: string; backHref: string; backLabel: string }) {
   return (
     <EmptyState
+      icon={SearchX}
       title={title}
       description="It may have been removed, or you may not have access to it."
-      action={<ButtonLink href={backHref} variant="secondary" size="sm">{backLabel}</ButtonLink>}
+      action={
+        <ButtonLink href={backHref} variant="secondary" size="sm">
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          {backLabel}
+        </ButtonLink>
+      }
     />
   );
 }

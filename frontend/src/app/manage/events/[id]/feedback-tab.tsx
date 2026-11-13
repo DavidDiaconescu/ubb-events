@@ -1,5 +1,6 @@
 "use client";
 
+import { MessageSquare, Star } from "lucide-react";
 import { StarDisplay } from "@/components/star-rating";
 import { CardSection } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/feedback";
@@ -17,10 +18,10 @@ export function FeedbackTab({ event }: { event: UbbEvent }) {
     .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
 
   if (event.status !== "FINISHED" && event.status !== "ARCHIVED") {
-    return <EmptyState title="Feedback opens after the event" description="Participants who checked in can rate the event once it is marked as finished." />;
+    return <EmptyState icon={MessageSquare} title="Feedback opens after the event" description="Participants who checked in can rate the event once it is marked as finished." />;
   }
   if (feedback.length === 0) {
-    return <EmptyState title="No feedback yet" />;
+    return <EmptyState icon={Star} title="No feedback yet" />;
   }
 
   const { average, count } = averageRating(state, event.id);
@@ -41,9 +42,12 @@ export function FeedbackTab({ event }: { event: UbbEvent }) {
             const ratingCount = feedback.filter((item) => item.rating === stars).length;
             return (
               <li key={stars} className="flex items-center gap-2 text-xs">
-                <span className="w-8 text-muted">{stars} ★</span>
+                <span className="inline-flex w-8 items-center gap-0.5 text-muted">
+                  {stars}
+                  <Star className="size-3 fill-accent text-accent" aria-label="stars" />
+                </span>
                 <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-muted">
-                  <span className="block h-full rounded-full bg-amber-500" style={{ width: `${(ratingCount / count) * 100}%` }} />
+                  <span className="block h-full rounded-full bg-accent" style={{ width: `${(ratingCount / count) * 100}%` }} />
                 </span>
                 <span className="w-4 text-right tabular-nums text-muted">{ratingCount}</span>
               </li>

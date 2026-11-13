@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { CalendarDays, Info, MapPin, type LucideIcon } from "lucide-react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
@@ -71,7 +72,7 @@ export function EventForm({ organizations, initialValues, lockOrganization = fal
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
       <Card className="space-y-5">
-        <h2 className="text-base font-semibold">General information</h2>
+        <FormSectionTitle icon={Info}>General information</FormSectionTitle>
         <Field label="Organization" htmlFor="organizationId" error={errors.organizationId}>
           <Select
             {...controlProps("organizationId")}
@@ -108,7 +109,7 @@ export function EventForm({ organizations, initialValues, lockOrganization = fal
       </Card>
 
       <Card className="space-y-5">
-        <h2 className="text-base font-semibold">Place and capacity</h2>
+        <FormSectionTitle icon={MapPin}>Place and capacity</FormSectionTitle>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field
             label="Venue"
@@ -129,7 +130,7 @@ export function EventForm({ organizations, initialValues, lockOrganization = fal
       </Card>
 
       <Card className="space-y-5">
-        <h2 className="text-base font-semibold">Schedule</h2>
+        <FormSectionTitle icon={CalendarDays}>Schedule</FormSectionTitle>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Starts" htmlFor="startTime" error={errors.startTime}>
             <Input {...controlProps("startTime")} type="datetime-local" onChange={(event) => updateValue("startTime", event.target.value)} />
@@ -156,6 +157,15 @@ export function EventForm({ organizations, initialValues, lockOrganization = fal
         <Button type="submit">{submitLabel}</Button>
       </div>
     </form>
+  );
+}
+
+function FormSectionTitle({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
+  return (
+    <h2 className="flex items-center gap-2 text-base font-semibold">
+      <Icon className="size-5 text-primary" aria-hidden="true" />
+      {children}
+    </h2>
   );
 }
 

@@ -1,15 +1,19 @@
 "use client";
 
+import { Star } from "lucide-react";
+
 const STARS = [1, 2, 3, 4, 5];
 
 /** Read-only star display, e.g. for an average rating. */
 export function StarDisplay({ rating }: { rating: number }) {
   return (
-    <span className="inline-flex text-amber-500" aria-label={`${rating.toFixed(1)} out of 5 stars`}>
+    <span className="inline-flex gap-0.5" role="img" aria-label={`${rating.toFixed(1)} out of 5 stars`}>
       {STARS.map((star) => (
-        <span key={star} aria-hidden="true" className={star <= Math.round(rating) ? "" : "opacity-25"}>
-          ★
-        </span>
+        <Star
+          key={star}
+          aria-hidden="true"
+          className={`size-4 ${star <= Math.round(rating) ? "fill-accent text-accent" : "text-border"}`}
+        />
       ))}
     </span>
   );
@@ -27,11 +31,12 @@ export function StarInput({ value, onChange }: { value: number; onChange: (ratin
           aria-checked={value === star}
           aria-label={`${star} star${star > 1 ? "s" : ""}`}
           onClick={() => onChange(star)}
-          className={`text-3xl leading-none transition-transform hover:scale-110 ${
-            star <= value ? "text-amber-500" : "text-border"
-          }`}
+          className="rounded transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-primary"
         >
-          ★
+          <Star
+            aria-hidden="true"
+            className={`size-8 ${star <= value ? "fill-accent text-accent" : "text-border"}`}
+          />
         </button>
       ))}
     </div>
