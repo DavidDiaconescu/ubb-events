@@ -1,8 +1,11 @@
 "use client";
 
-import { CalendarCheck, CalendarDays, Compass } from "lucide-react";
+import { CalendarCheck, CalendarDays } from "lucide-react";
 import Link from "next/link";
+import { CategoryShortcuts } from "@/components/category-shortcuts";
 import { EventCard } from "@/components/event-card";
+import { FeaturedEvent } from "@/components/featured-event";
+import { HeroSlideshow } from "@/components/hero-slideshow";
 import { RegistrationStatusBadge } from "@/components/status-badges";
 import { ButtonLink } from "@/components/ui/button";
 import { CardSection } from "@/components/ui/card";
@@ -36,43 +39,28 @@ function eventsOpenForRegistration(state: AppState, now: number): UbbEvent[] {
 function Welcome() {
   const state = useAppState();
   const now = useNow();
-  const openEvents = eventsOpenForRegistration(state, now).slice(0, MAX_SUGGESTIONS);
+  // The soonest open event is spotlighted; the next ones follow in the list.
+  const [featuredEvent, ...otherOpenEvents] = eventsOpenForRegistration(state, now);
+  const listedEvents = otherOpenEvents.slice(0, MAX_SUGGESTIONS);
 
   return (
-    <div className="space-y-10">
-      <section className="rounded-2xl bg-primary-soft px-6 py-12 text-center sm:px-12 sm:py-16">
-        <p className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
-          <span className="grid size-7 place-items-center rounded-lg bg-primary text-xs text-primary-foreground" aria-hidden="true">
-            UE
-          </span>
-          UBB Events
-        </p>
-        <p className="mt-4 text-sm font-medium text-primary">Babeș-Bolyai University · Student organizations</p>
-        <h1 className="mx-auto mt-3 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-          Discover, join and organize student events in one place
-        </h1>
-        {/* foreground/80 instead of muted: muted on primary-soft is below 4.5:1. */}
-        <p className="mx-auto mt-4 max-w-xl text-foreground/80">
-          Workshops, conferences, trainings and competitions organized by UBB student organizations, from
-          registration to check-in and feedback.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <ButtonLink href="/events">
-            <Compass className="size-4" aria-hidden="true" />
-            Browse events
-          </ButtonLink>
-          <ButtonLink href="/login" variant="secondary">Sign in with a demo account</ButtonLink>
-        </div>
-      </section>
+    <div className="space-y-12">
+      <HeroSlideshow title="Student events at UBB" />
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold">Open for registration</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {openEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
-      </section>
+      <CategoryShortcuts />
+
+      {featuredEvent && <FeaturedEvent event={featuredEvent} />}
+
+      {listedEvents.length > 0 && (
+        <section>
+          <h2 className="mb-4 text-lg font-semibold">Also open for registration</h2>
+          <div className="flex flex-col gap-4">
+            {listedEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -145,7 +133,7 @@ function SignedInDashboard({ user }: { user: User }) {
             {suggestions.length === 0 ? (
               <EmptyState icon={CalendarDays} title="No other events are open for registration right now" />
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-4">
                 {suggestions.map((event) => (
                   <EventCard key={event.id} event={event} />
                 ))}
