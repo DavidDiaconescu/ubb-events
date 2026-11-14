@@ -1,5 +1,6 @@
 "use client";
 
+import { QrCode, Users } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { RegistrationStatusBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
@@ -63,11 +64,11 @@ export function ParticipantsTab({ event }: { event: UbbEvent }) {
         }
       >
         {registrations.length === 0 ? (
-          <EmptyState title="No registrations" />
+          <EmptyState icon={Users} title="No registrations" />
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="border-b border-border text-xs uppercase tracking-wide text-muted">
+              <thead className="border-y border-border bg-surface-muted text-xs uppercase tracking-wide text-muted">
                 <tr>
                   <th scope="col" className="px-5 py-2 font-medium">Participant</th>
                   <th scope="col" className="px-5 py-2 font-medium">Status</th>
@@ -80,7 +81,7 @@ export function ParticipantsTab({ event }: { event: UbbEvent }) {
                 {registrations.map((registration) => {
                   const user = state.users.find((item) => item.id === registration.userId);
                   return (
-                    <tr key={registration.id}>
+                    <tr key={registration.id} className="transition-colors hover:bg-surface-muted">
                       <td className="px-5 py-3">
                         <p className="font-medium">{userDisplayName(state, registration.userId)}</p>
                         <p className="text-xs text-muted">{user?.email}</p>
@@ -90,7 +91,10 @@ export function ParticipantsTab({ event }: { event: UbbEvent }) {
                       <td className="px-5 py-3 text-muted">{registrationDetails(registration)}</td>
                       <td className="px-5 py-3 text-right">
                         {canCheckIn && registration.status === "CONFIRMED" && (
-                          <Button size="sm" variant="secondary" onClick={() => handleCheckIn(registration)}>Check in</Button>
+                          <Button size="sm" variant="secondary" onClick={() => handleCheckIn(registration)}>
+                            <QrCode className="size-4" aria-hidden="true" />
+                            Check in
+                          </Button>
                         )}
                       </td>
                     </tr>
@@ -133,7 +137,10 @@ function CheckInForm({ event }: { event: UbbEvent }) {
           className="max-w-xs font-mono uppercase"
           autoComplete="off"
         />
-        <Button type="submit" disabled={code.trim() === ""}>Check in</Button>
+        <Button type="submit" disabled={code.trim() === ""}>
+          <QrCode className="size-4" aria-hidden="true" />
+          Check in
+        </Button>
       </form>
     </CardSection>
   );

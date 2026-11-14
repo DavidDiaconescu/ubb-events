@@ -7,13 +7,23 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   blue: "bg-primary-soft text-primary",
   green: "bg-success-soft text-success",
   amber: "bg-warning-soft text-warning",
-  red: "bg-danger-soft text-danger",
-  purple: "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
+  red: "bg-danger-soft text-danger-foreground",
+  purple: "bg-info-soft text-info",
 };
 
-export function Badge({ tone = "neutral", children }: { tone?: BadgeTone; children: ReactNode }) {
+interface BadgeProps {
+  tone?: BadgeTone;
+  /** Shows a small dot in the badge colour before the text; used for statuses. */
+  dot?: boolean;
+  children: ReactNode;
+}
+
+export function Badge({ tone = "neutral", dot = false, children }: BadgeProps) {
   return (
-    <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${TONE_CLASSES[tone]}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${TONE_CLASSES[tone]}`}
+    >
+      {dot && <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-current" />}
       {children}
     </span>
   );

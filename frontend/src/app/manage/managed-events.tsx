@@ -1,9 +1,11 @@
 "use client";
 
+import { LayoutDashboard, Plus } from "lucide-react";
 import Link from "next/link";
 import { AccessDenied, SignInRequired } from "@/components/sign-in-required";
 import { EventStatusBadge } from "@/components/status-badges";
 import { ButtonLink } from "@/components/ui/button";
+import { CARD_CLASSES } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/feedback";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateTime } from "@/lib/format";
@@ -35,13 +37,20 @@ export function ManagedEvents() {
       <PageHeader
         title="Manage events"
         description="Events of your organizations and events you help organize."
-        actions={canCreateEvents && <ButtonLink href="/manage/events/new">New event</ButtonLink>}
+        actions={
+          canCreateEvents && (
+            <ButtonLink href="/manage/events/new">
+              <Plus className="size-4" aria-hidden="true" />
+              New event
+            </ButtonLink>
+          )
+        }
       />
 
       {managedEvents.length === 0 ? (
-        <EmptyState title="You do not manage any events yet" />
+        <EmptyState icon={LayoutDashboard} title="You do not manage any events yet" />
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-10">
           {GROUPS.map((group) => {
             const events = managedEvents
               .filter((event) => group.statuses.includes(event.status))
@@ -66,9 +75,9 @@ function ManagedEventTable({ events }: { events: UbbEvent[] }) {
   const state = useAppState();
 
   return (
-    <div className="mt-3 overflow-x-auto rounded-xl border border-border bg-surface">
+    <div className={`mt-3 overflow-x-auto ${CARD_CLASSES}`}>
       <table className="w-full min-w-[640px] text-left text-sm">
-        <thead className="border-b border-border text-xs uppercase tracking-wide text-muted">
+        <thead className="border-b border-border bg-surface-muted text-xs uppercase tracking-wide text-muted">
           <tr>
             <th scope="col" className="px-4 py-3 font-medium">Event</th>
             <th scope="col" className="px-4 py-3 font-medium">Starts</th>
@@ -79,7 +88,7 @@ function ManagedEventTable({ events }: { events: UbbEvent[] }) {
         </thead>
         <tbody className="divide-y divide-border">
           {events.map((event) => (
-            <tr key={event.id} className="hover:bg-surface-muted/60">
+            <tr key={event.id} className="transition-colors hover:bg-surface-muted">
               <td className="px-4 py-3">
                 <Link href={`/manage/events/${event.id}`} className="font-medium hover:text-primary">{event.title}</Link>
                 <p className="text-xs text-muted">{organizationName(state, event.organizationId)}</p>

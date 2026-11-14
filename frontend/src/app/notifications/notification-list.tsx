@@ -1,5 +1,18 @@
 "use client";
 
+import {
+  AlarmClock,
+  ArrowUp,
+  BadgeCheck,
+  Bell,
+  CircleCheck,
+  CircleX,
+  ListTodo,
+  Megaphone,
+  Pencil,
+  ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { SignInRequired } from "@/components/sign-in-required";
 import { Button } from "@/components/ui/button";
@@ -10,16 +23,16 @@ import { markAllNotificationsAsRead, markNotificationAsRead } from "@/lib/mock-a
 import { useAppState, useCurrentUser } from "@/lib/store";
 import type { NotificationType } from "@/lib/types";
 
-const TYPE_ICONS: Record<NotificationType, string> = {
-  REGISTRATION_CONFIRMED: "✓",
-  WAITLIST_PROMOTED: "↑",
-  EVENT_UPDATED: "✎",
-  EVENT_CANCELLED: "✕",
-  REMINDER: "⏰",
-  APPROVAL_REQUEST: "?",
-  APPROVAL_RESULT: "★",
-  ANNOUNCEMENT: "📣",
-  TASK_ASSIGNED: "☑",
+const TYPE_ICONS: Record<NotificationType, { Icon: LucideIcon; color: string }> = {
+  REGISTRATION_CONFIRMED: { Icon: CircleCheck, color: "bg-success-soft text-success" },
+  WAITLIST_PROMOTED: { Icon: ArrowUp, color: "bg-success-soft text-success" },
+  EVENT_UPDATED: { Icon: Pencil, color: "bg-primary-soft text-primary" },
+  EVENT_CANCELLED: { Icon: CircleX, color: "bg-danger-soft text-danger" },
+  REMINDER: { Icon: AlarmClock, color: "bg-accent-soft text-accent" },
+  APPROVAL_REQUEST: { Icon: ShieldCheck, color: "bg-warning-soft text-warning" },
+  APPROVAL_RESULT: { Icon: BadgeCheck, color: "bg-info-soft text-info" },
+  ANNOUNCEMENT: { Icon: Megaphone, color: "bg-primary-soft text-primary" },
+  TASK_ASSIGNED: { Icon: ListTodo, color: "bg-primary-soft text-primary" },
 };
 
 export function NotificationList() {
@@ -48,15 +61,16 @@ export function NotificationList() {
       />
 
       {notifications.length === 0 ? (
-        <EmptyState title="No notifications yet" />
+        <EmptyState icon={Bell} title="No notifications yet" />
       ) : (
-        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
           {notifications.map((notification) => {
             const target = notification.eventId ? `/events/${notification.eventId}` : null;
+            const { Icon, color } = TYPE_ICONS[notification.type];
             const content = (
               <>
-                <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-muted text-sm">
-                  {TYPE_ICONS[notification.type]}
+                <span aria-hidden="true" className={`grid size-9 shrink-0 place-items-center rounded-full ${color}`}>
+                  <Icon className="size-4" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className={`block text-sm ${notification.read ? "text-muted" : "font-medium"}`}>

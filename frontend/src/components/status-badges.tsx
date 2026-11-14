@@ -35,15 +35,15 @@ const TASK_STATUS_TONES: Record<TaskStatus, BadgeTone> = {
 };
 
 export function EventStatusBadge({ status }: { status: EventStatus }) {
-  return <Badge tone={EVENT_STATUS_TONES[status]}>{EVENT_STATUS_LABELS[status]}</Badge>;
+  return <Badge tone={EVENT_STATUS_TONES[status]} dot>{EVENT_STATUS_LABELS[status]}</Badge>;
 }
 
 export function RegistrationStatusBadge({ status }: { status: RegistrationStatus }) {
-  return <Badge tone={REGISTRATION_STATUS_TONES[status]}>{REGISTRATION_STATUS_LABELS[status]}</Badge>;
+  return <Badge tone={REGISTRATION_STATUS_TONES[status]} dot>{REGISTRATION_STATUS_LABELS[status]}</Badge>;
 }
 
 export function TaskStatusBadge({ status }: { status: TaskStatus }) {
-  return <Badge tone={TASK_STATUS_TONES[status]}>{TASK_STATUS_LABELS[status]}</Badge>;
+  return <Badge tone={TASK_STATUS_TONES[status]} dot>{TASK_STATUS_LABELS[status]}</Badge>;
 }
 
 export function CategoryBadge({ category }: { category: EventCategory }) {

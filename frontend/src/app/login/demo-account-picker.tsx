@@ -1,6 +1,8 @@
 "use client";
 
+import { CircleCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { CARD_CLASSES, INTERACTIVE_CARD_CLASSES } from "@/components/ui/card";
 import { Notice } from "@/components/ui/feedback";
 import { PageHeader } from "@/components/ui/page-header";
 import { fullName, initials } from "@/lib/format";
@@ -53,8 +55,8 @@ export function DemoAccountPicker() {
               <button
                 type="button"
                 onClick={() => handleSignIn(userId)}
-                className={`flex w-full items-center gap-4 rounded-xl border bg-surface p-4 text-left transition-colors hover:border-primary ${
-                  isCurrent ? "border-primary" : "border-border"
+                className={`flex w-full items-center gap-4 p-4 text-left ${CARD_CLASSES} ${INTERACTIVE_CARD_CLASSES} ${
+                  isCurrent ? "border-primary! ring-1 ring-primary" : ""
                 }`}
               >
                 <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary-soft font-semibold text-primary">
@@ -67,7 +69,12 @@ export function DemoAccountPicker() {
                   </span>
                   <span className="mt-0.5 block text-sm text-muted">{scenario}</span>
                 </span>
-                {isCurrent && <span className="text-xs font-medium text-primary">Signed in</span>}
+                {isCurrent && (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                    <CircleCheck className="size-4" aria-hidden="true" />
+                    Signed in
+                  </span>
+                )}
               </button>
             </li>
           );

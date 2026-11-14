@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -12,8 +13,9 @@ export function PageHeader({ title, description, actions, backLink }: PageHeader
   return (
     <header className="mb-6">
       {backLink && (
-        <Link href={backLink.href} className="mb-3 inline-block text-sm text-muted hover:text-foreground">
-          ← {backLink.label}
+        <Link href={backLink.href} className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground">
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          {backLink.label}
         </Link>
       )}
       <div className="flex flex-wrap items-end justify-between gap-4">

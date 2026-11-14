@@ -1,10 +1,12 @@
 "use client";
 
+import { CalendarCheck, Clock, Hourglass, MapPin, QrCode } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { SignInRequired } from "@/components/sign-in-required";
 import { RegistrationStatusBadge } from "@/components/status-badges";
 import { ButtonLink } from "@/components/ui/button";
+import { CARD_CLASSES } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/feedback";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs } from "@/components/ui/tabs";
@@ -71,27 +73,40 @@ export function MyRegistrations() {
 
       {items.length === 0 ? (
         <EmptyState
+          icon={CalendarCheck}
           title="Nothing here yet"
           action={activeTab === "upcoming" ? <ButtonLink href="/events" size="sm">Discover events</ButtonLink> : undefined}
         />
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-4">
           {items.map(({ registration, event }) => (
-            <li key={registration.id} className="rounded-xl border border-border bg-surface p-4">
+            <li key={registration.id} className={`p-5 ${CARD_CLASSES}`}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <Link href={`/events/${event.id}`} className="font-semibold hover:text-primary">{event.title}</Link>
                   <p className="text-sm text-muted">{organizationName(state, event.organizationId)}</p>
-                  <p className="mt-1 text-sm">{formatEventTime(event.startTime, event.endTime)}</p>
-                  <p className="text-sm text-muted">{venueLabel(state, event.venueId)}</p>
+                  <p className="mt-1 flex items-center gap-2 text-sm">
+                    <Clock className="size-4 shrink-0 text-muted" aria-hidden="true" />
+                    {formatEventTime(event.startTime, event.endTime)}
+                  </p>
+                  <p className="flex items-center gap-2 text-sm text-muted">
+                    <MapPin className="size-4 shrink-0" aria-hidden="true" />
+                    {venueLabel(state, event.venueId)}
+                  </p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <RegistrationStatusBadge status={registration.status} />
                   {registration.status === "CONFIRMED" && (
-                    <span className="rounded-md bg-surface-muted px-2 py-1 font-mono text-sm">{registration.checkInCode}</span>
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-surface-muted px-2 py-1 font-mono text-sm">
+                      <QrCode className="size-4 text-muted" aria-hidden="true" />
+                      {registration.checkInCode}
+                    </span>
                   )}
                   {registration.status === "WAITLISTED" && (
-                    <span className="text-sm text-muted">#{registration.waitlistPosition} on the waitlist</span>
+                    <span className="inline-flex items-center gap-1.5 text-sm text-muted">
+                      <Hourglass className="size-4" aria-hidden="true" />
+                      #{registration.waitlistPosition} on the waitlist
+                    </span>
                   )}
                   {registration.lateCancellation && <span className="text-xs text-warning">Late cancellation</span>}
                 </div>

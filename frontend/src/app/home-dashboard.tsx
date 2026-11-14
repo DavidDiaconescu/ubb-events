@@ -1,11 +1,16 @@
 "use client";
 
+import { CalendarCheck, CalendarDays } from "lucide-react";
 import Link from "next/link";
+import { CategoryShortcuts } from "@/components/category-shortcuts";
 import { EventCard } from "@/components/event-card";
+import { FeaturedEvent } from "@/components/featured-event";
+import { HeroSlideshow } from "@/components/hero-slideshow";
 import { RegistrationStatusBadge } from "@/components/status-badges";
 import { ButtonLink } from "@/components/ui/button";
 import { CardSection } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/feedback";
+import { PageHeader } from "@/components/ui/page-header";
 import { formatCalendarDate, formatDateTime, formatEventTime } from "@/lib/format";
 import { useNow } from "@/lib/hooks";
 import { canManageEvent, describeRole, isAdmin } from "@/lib/permissions";
@@ -34,33 +39,28 @@ function eventsOpenForRegistration(state: AppState, now: number): UbbEvent[] {
 function Welcome() {
   const state = useAppState();
   const now = useNow();
-  const openEvents = eventsOpenForRegistration(state, now).slice(0, MAX_SUGGESTIONS);
+  // The soonest open event is spotlighted; the next ones follow in the list.
+  const [featuredEvent, ...otherOpenEvents] = eventsOpenForRegistration(state, now);
+  const listedEvents = otherOpenEvents.slice(0, MAX_SUGGESTIONS);
 
   return (
     <div className="space-y-12">
-      <section className="rounded-2xl border border-border bg-surface px-6 py-12 text-center sm:px-12">
-        <p className="text-sm font-medium text-primary">Babeș-Bolyai University · Student organizations</p>
-        <h1 className="mx-auto mt-3 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-          Discover, join and organize student events in one place
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-muted">
-          Workshops, conferences, trainings and competitions organized by UBB student organizations, from
-          registration to check-in and feedback.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <ButtonLink href="/events">Browse events</ButtonLink>
-          <ButtonLink href="/login" variant="secondary">Sign in with a demo account</ButtonLink>
-        </div>
-      </section>
+      <HeroSlideshow title="Student events at UBB" />
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold">Open for registration</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {openEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
-      </section>
+      <CategoryShortcuts />
+
+      {featuredEvent && <FeaturedEvent event={featuredEvent} />}
+
+      {listedEvents.length > 0 && (
+        <section>
+          <h2 className="mb-4 text-lg font-semibold">Also open for registration</h2>
+          <div className="flex flex-col gap-4">
+            {listedEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -88,11 +88,8 @@ function SignedInDashboard({ user }: { user: User }) {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Hello, {user.firstName}!</h1>
-        <p className="mt-1 text-muted">{describeRole(state, user)}</p>
-      </div>
+    <div>
+      <PageHeader title={`Hello, ${user.firstName}!`} description={describeRole(state, user)} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -102,13 +99,17 @@ function SignedInDashboard({ user }: { user: User }) {
           >
             {myRegistrations.length === 0 ? (
               <EmptyState
+                icon={CalendarCheck}
                 title="You are not registered for any event yet"
                 action={<ButtonLink href="/events" size="sm">Discover events</ButtonLink>}
               />
             ) : (
-              <ul className="divide-y divide-border">
+              <ul className="-mx-2 divide-y divide-border">
                 {myRegistrations.map(({ registration, event }) => (
-                  <li key={registration.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <li
+                    key={registration.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg px-2 py-3 hover:bg-surface-muted"
+                  >
                     <div className="min-w-0">
                       <Link href={`/events/${event.id}`} className="font-medium hover:text-primary">
                         {event.title}
@@ -130,9 +131,9 @@ function SignedInDashboard({ user }: { user: User }) {
           <section>
             <h2 className="mb-4 text-base font-semibold">Open for registration</h2>
             {suggestions.length === 0 ? (
-              <EmptyState title="No other events are open for registration right now" />
+              <EmptyState icon={CalendarDays} title="No other events are open for registration right now" />
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-4">
                 {suggestions.map((event) => (
                   <EventCard key={event.id} event={event} />
                 ))}

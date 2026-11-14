@@ -1,12 +1,13 @@
 "use client";
 
+import { Building2, CircleCheck, MapPin, Plus, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { AccessDenied, SignInRequired } from "@/components/sign-in-required";
 import { CategoryBadge } from "@/components/status-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CardSection } from "@/components/ui/card";
+import { CARD_CLASSES, CardSection } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/feedback";
 import { Checkbox, Field, Input } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/page-header";
@@ -38,10 +39,10 @@ export function AdminConsole() {
         activeTab={activeTab}
         onChange={setActiveTab}
         tabs={[
-          { id: "approvals", label: "Approvals", count: pendingEvents.length },
-          { id: "organizations", label: "Organizations", count: state.organizations.length },
-          { id: "users", label: "Users", count: state.users.length },
-          { id: "venues", label: "Venues", count: state.venues.length },
+          { id: "approvals", label: "Approvals", count: pendingEvents.length, icon: ShieldCheck },
+          { id: "organizations", label: "Organizations", count: state.organizations.length, icon: Building2 },
+          { id: "users", label: "Users", count: state.users.length, icon: Users },
+          { id: "venues", label: "Venues", count: state.venues.length, icon: MapPin },
         ]}
       />
       {activeTab === "approvals" && <ApprovalQueue events={pendingEvents} />}
@@ -56,13 +57,13 @@ function ApprovalQueue({ events }: { events: UbbEvent[] }) {
   const state = useAppState();
 
   if (events.length === 0) {
-    return <EmptyState title="No events are waiting for approval" />;
+    return <EmptyState icon={CircleCheck} title="No events are waiting for approval" />;
   }
 
   return (
     <ul className="space-y-4">
       {events.map((event) => (
-        <li key={event.id} className="rounded-xl border border-border bg-surface p-5">
+        <li key={event.id} className={`p-5 ${CARD_CLASSES}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -141,7 +142,7 @@ function UsersAdmin() {
     <CardSection title="Users" description="Disabled users cannot sign in or register for events.">
       <div className="-mx-5 overflow-x-auto">
         <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="border-b border-border text-xs uppercase tracking-wide text-muted">
+          <thead className="border-y border-border bg-surface-muted text-xs uppercase tracking-wide text-muted">
             <tr>
               <th scope="col" className="px-5 py-2 font-medium">Name</th>
               <th scope="col" className="px-5 py-2 font-medium">Faculty</th>
@@ -151,7 +152,7 @@ function UsersAdmin() {
           </thead>
           <tbody className="divide-y divide-border">
             {users.map((user) => (
-              <tr key={user.id} className={user.enabled ? "" : "text-muted"}>
+              <tr key={user.id} className={`transition-colors hover:bg-surface-muted ${user.enabled ? "" : "text-muted"}`}>
                 <td className="px-5 py-3">
                   <p className="font-medium">{fullName(user)}</p>
                   <p className="text-xs text-muted">{user.email}</p>
@@ -235,7 +236,10 @@ function VenuesAdmin() {
               onChange={(changeEvent) => setMaxCapacity(changeEvent.target.value)}
             />
           </Field>
-          <Button type="submit" className="w-full" disabled={name.trim() === ""}>Add venue</Button>
+          <Button type="submit" className="w-full" disabled={name.trim() === ""}>
+            <Plus className="size-4" aria-hidden="true" />
+            Add venue
+          </Button>
         </form>
       </CardSection>
     </div>
