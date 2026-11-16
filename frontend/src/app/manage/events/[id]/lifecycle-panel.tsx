@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Notice } from "@/components/ui/feedback";
-import { Field, Textarea } from "@/components/ui/form";
+import { changeEventStatus } from "@/lib/actions";
 import { ALLOWED_TRANSITIONS, LIFECYCLE_STEPS, requiresAdmin, transitionLabel } from "@/lib/event-lifecycle";
 import { EVENT_STATUS_LABELS } from "@/lib/labels";
-import { changeEventStatus } from "@/lib/mock-api";
 import { isAdmin } from "@/lib/permissions";
 import { useCurrentUser } from "@/lib/store";
 import { runAction } from "@/lib/toast";
 import type { EventStatus, UbbEvent } from "@/lib/types";
+import { CancelEventForm } from "./cancel-event-form";
 
 const NEXT_STEP_HINTS: Record<EventStatus, string> = {
   DRAFT: "Complete the details, then submit the event for approval.",
@@ -28,29 +27,17 @@ const NEXT_STEP_HINTS: Record<EventStatus, string> = {
 /** Shows where the event is in its lifecycle and the status changes the user can make. */
 export function LifecyclePanel({ event }: { event: UbbEvent }) {
   const user = useCurrentUser();
-  const [isCancelling, setIsCancelling] = useState(false);
-  const [cancellationReason, setCancellationReason] = useState("");
 
   const availableTransitions = ALLOWED_TRANSITIONS[event.status].filter(
     (target) => !requiresAdmin(event.status, target) || isAdmin(user),
   );
   const nextSteps = availableTransitions.filter((target) => target !== "CANCELLED");
-  const canCancel = availableTransitions.includes("CANCELLED");
-
   const hint = event.status === "PENDING_APPROVAL" && isAdmin(user)
     ? "Review the event, then approve it or send it back to the organizers."
     : NEXT_STEP_HINTS[event.status];
 
   function changeStatus(target: EventStatus) {
     runAction(() => changeEventStatus(event.id, target), `Status changed to "${EVENT_STATUS_LABELS[target]}".`);
-  }
-
-  function confirmCancellation() {
-    const succeeded = runAction(
-      () => changeEventStatus(event.id, "CANCELLED", cancellationReason),
-      "The event was cancelled and the participants were notified.",
-    );
-    if (succeeded) setIsCancelling(false);
   }
 
   return (
@@ -65,46 +52,14 @@ export function LifecyclePanel({ event }: { event: UbbEvent }) {
         <p className="text-sm text-muted">{hint}</p>
         <div className="flex flex-wrap gap-2">
           {nextSteps.map((target, index) => (
-            <Button
-              key={target}
-              size="sm"
-              variant={index === 0 ? "primary" : "secondary"}
-              onClick={() => changeStatus(target)}
-            >
+            <Button key={target} size="sm" variant={index === 0 ? "primary" : "secondary"} onClick={() => changeStatus(target)}>
               {transitionLabel(event.status, target)}
             </Button>
           ))}
-          {canCancel && !isCancelling && (
-            <Button size="sm" variant="ghost" className="text-danger" onClick={() => setIsCancelling(true)}>
-              Cancel event
-            </Button>
-          )}
         </div>
       </div>
 
-      {isCancelling && (
-        <div className="mt-4 space-y-3 rounded-lg border border-danger/40 border-l-4 border-l-danger bg-surface p-4">
-          <Field
-            label="Why is the event cancelled?"
-            htmlFor="cancellation-reason"
-            hint="Every registered participant receives this message."
-          >
-            <Textarea
-              id="cancellation-reason"
-              maxLength={255}
-              rows={2}
-              value={cancellationReason}
-              onChange={(changeEvent) => setCancellationReason(changeEvent.target.value)}
-            />
-          </Field>
-          <div className="flex gap-2">
-            <Button size="sm" variant="danger" onClick={confirmCancellation} disabled={cancellationReason.trim() === ""}>
-              Cancel the event
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setIsCancelling(false)}>Keep the event</Button>
-          </div>
-        </div>
-      )}
+      {availableTransitions.includes("CANCELLED") && <CancelEventForm eventId={event.id} />}
     </Card>
   );
 }

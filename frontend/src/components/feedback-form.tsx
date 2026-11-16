@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { StarInput } from "@/components/star-rating";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Textarea } from "@/components/ui/form";
-import { submitFeedback } from "@/lib/mock-api";
+import { submitFeedback } from "@/lib/actions";
 import { runAction } from "@/lib/toast";
 
 const MAX_COMMENT_LENGTH = 255;
@@ -13,11 +13,16 @@ export function FeedbackForm({ eventId }: { eventId: number }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [anonymous, setAnonymous] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-  function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
     formEvent.preventDefault();
-    runAction(() => submitFeedback(eventId, { rating, comment, anonymous }), "Thank you for your feedback!");
+    if (await runAction(() => submitFeedback(eventId, { rating, comment, anonymous }), "Thank you for your feedback!")) {
+      setSubmitted(true);
+    }
   }
+
+  if (submitted) return <p className="text-sm text-muted">Thank you, your feedback was recorded.</p>;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

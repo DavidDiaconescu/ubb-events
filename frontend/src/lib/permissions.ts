@@ -1,7 +1,7 @@
 import type { AppState, Organization, UbbEvent, User } from "./types";
 
 /**
- * Role checks used by the UI and by the mock API.
+ * Role checks used by the UI and by the actions.
  *
  * Actors:
  *  - Student: any signed-in user; discovers events and registers.

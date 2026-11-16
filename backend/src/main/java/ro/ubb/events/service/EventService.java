@@ -3,6 +3,7 @@ package ro.ubb.events.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.ubb.events.security.AccessPolicy;
 import ro.ubb.events.domain.entity.Event;
 import ro.ubb.events.domain.entity.EventOrganizer;
 import ro.ubb.events.domain.entity.Organization;
@@ -73,9 +74,10 @@ public class EventService {
     private final RegistrationRepository registrationRepository;
     private final RegistrationService registrationService;
     private final NotificationService notificationService;
+    private final AccessPolicy accessPolicy;
 
     /**
-     * Both filters are optional.
+     * Both filters are optional. Events in preparation are returned only to the users who manage them.
      */
     public List<EventResponse> findAll(Long organizationId, EventStatus status) {
         List<Event> events;
@@ -90,32 +92,32 @@ public class EventService {
         }
 
         return events.stream()
+                .filter(accessPolicy::canViewEvent)
                 .map(EventResponse::from)
                 .toList();
     }
 
     public EventResponse findById(Long id) {
         Event event = eventRepository.findById(id)
+                .filter(accessPolicy::canViewEvent)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", id));
         return EventResponse.from(event);
     }
 
     /**
-     * Creates the event as a DRAFT; its creator automatically becomes the LEAD organizer.
+     * Creates the event as a DRAFT; the current user (a coordinator of the organization or an administrator)
+     * becomes its LEAD organizer.
      */
     @Transactional
     public EventResponse create(CreateEventRequest request) {
         Organization organization = organizationRepository.findById(request.organizationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Organization", request.organizationId()));
+        accessPolicy.requireCoordinatorOrAdmin(organization.getId());
         if (organization.getStatus() != OrgStatus.ACTIVE) {
             throw new ConflictException("Organization " + organization.getId() + " is suspended and cannot create events");
         }
 
-        User creator = userRepository.findById(request.createdById())
-                .orElseThrow(() -> new ResourceNotFoundException("User", request.createdById()));
-        if (!creator.isEnabled()) {
-            throw new ConflictException("User " + creator.getId() + " is disabled");
-        }
+        User creator = accessPolicy.currentUser();
 
         Venue venue = findVenueOrNull(request.venueId());
         validateDetails(request, venue);
@@ -142,6 +144,7 @@ public class EventService {
     @Transactional
     public EventResponse update(Long id, UpdateEventRequest request) {
         Event event = lockEvent(id);
+        accessPolicy.requireEventManager(event);
 
         if (!event.getVersion().equals(request.version())) {
             throw new ConflictException("The event was modified by someone else. Reload it and try again.");
@@ -153,10 +156,10 @@ public class EventService {
         Venue venue = findVenueOrNull(request.venueId());
         validateDetails(request, venue);
 
-        long confirmedCount = registrationRepository.countByEventIdAndStatus(id, RegistrationStatus.CONFIRMED);
-        if (request.capacity() < confirmedCount) {
-            throw new ConflictException("The capacity cannot be lower than the " + confirmedCount
-                    + " confirmed registrations");
+        long takenPlaces = registrationService.countTakenPlaces(id);
+        if (request.capacity() < takenPlaces) {
+            throw new ConflictException("The capacity cannot be lower than the " + takenPlaces
+                    + " places already taken");
         }
 
         applyDetails(event, request, venue);
@@ -177,6 +180,11 @@ public class EventService {
         EventStatus currentStatus = event.getStatus();
         EventStatus newStatus = request.status();
 
+        if (isApprovalDecision(currentStatus, newStatus)) {
+            accessPolicy.requireAdmin();
+        } else {
+            accessPolicy.requireEventManager(event);
+        }
         if (!ALLOWED_TRANSITIONS.get(currentStatus).contains(newStatus)) {
             throw new ConflictException("The event status cannot change from " + currentStatus + " to " + newStatus);
         }
@@ -198,6 +206,11 @@ public class EventService {
         // Flush so that the response contains the incremented version.
         eventRepository.flush();
         return EventResponse.from(event);
+    }
+
+    /** Approving or rejecting (sending back to draft) a pending event is reserved to administrators. */
+    private static boolean isApprovalDecision(EventStatus from, EventStatus to) {
+        return from == EventStatus.PENDING_APPROVAL && (to == EventStatus.APPROVED || to == EventStatus.DRAFT);
     }
 
     private void sendStatusChangeNotifications(Event event, EventStatus oldStatus, EventStatus newStatus) {

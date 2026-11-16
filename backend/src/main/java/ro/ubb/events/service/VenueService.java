@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.ubb.events.security.AccessPolicy;
 import ro.ubb.events.domain.entity.Venue;
 import ro.ubb.events.dto.venue.VenueRequest;
 import ro.ubb.events.dto.venue.VenueResponse;
@@ -22,6 +23,7 @@ public class VenueService {
 
     private final VenueRepository venueRepository;
     private final EventRepository eventRepository;
+    private final AccessPolicy accessPolicy;
 
     public List<VenueResponse> findAll() {
         return venueRepository.findAll(Sort.by("name")).stream()
@@ -35,6 +37,7 @@ public class VenueService {
 
     @Transactional
     public VenueResponse create(VenueRequest request) {
+        accessPolicy.requireAdmin();
         validate(request);
 
         Venue venue = new Venue();
@@ -45,6 +48,7 @@ public class VenueService {
 
     @Transactional
     public VenueResponse update(Long id, VenueRequest request) {
+        accessPolicy.requireAdmin();
         validate(request);
 
         Venue venue = getVenue(id);
@@ -55,6 +59,7 @@ public class VenueService {
 
     @Transactional
     public void delete(Long id) {
+        accessPolicy.requireAdmin();
         Venue venue = getVenue(id);
         if (eventRepository.existsByVenueId(id)) {
             throw new ConflictException("Venue " + id + " is used by at least one event and cannot be deleted");

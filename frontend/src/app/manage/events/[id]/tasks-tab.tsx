@@ -1,26 +1,24 @@
 "use client";
 
-import { ListTodo, Plus, Trash2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { ListTodo, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CardSection } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/feedback";
-import { Field, Input, Select, Textarea } from "@/components/ui/form";
+import { Select } from "@/components/ui/form";
+import { deleteTask, updateTaskStatus } from "@/lib/actions";
 import { formatCalendarDate } from "@/lib/format";
 import { TASK_STATUS_LABELS } from "@/lib/labels";
-import { createTask, deleteTask, updateTaskStatus } from "@/lib/mock-api";
 import { userDisplayName } from "@/lib/queries";
 import { useAppState } from "@/lib/store";
 import { runAction } from "@/lib/toast";
 import type { Task, TaskStatus, UbbEvent } from "@/lib/types";
+import { NewTaskForm } from "./new-task-form";
 
 const STATUS_ORDER: TaskStatus[] = ["TODO", "IN_PROGRESS", "DONE"];
 
 export function TasksTab({ event }: { event: UbbEvent }) {
   const state = useAppState();
-  const tasks = state.tasks
-    .filter((task) => task.eventId === event.id)
-    .sort(compareTasks);
+  const tasks = state.tasks.filter((task) => task.eventId === event.id).sort(compareTasks);
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -59,9 +57,7 @@ function TaskRow({ task }: { task: Task }) {
           onChange={(changeEvent) => runAction(() => updateTaskStatus(task.id, changeEvent.target.value as TaskStatus))}
           className="h-8 w-36 py-1"
         >
-          {STATUS_ORDER.map((status) => (
-            <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>
-          ))}
+          {STATUS_ORDER.map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
         </Select>
         <Button
           size="sm"
@@ -74,60 +70,6 @@ function TaskRow({ task }: { task: Task }) {
         </Button>
       </div>
     </li>
-  );
-}
-
-function NewTaskForm({ event }: { event: UbbEvent }) {
-  const state = useAppState();
-  const [title, setTitle] = useState("");
-  const [assigneeId, setAssigneeId] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [description, setDescription] = useState("");
-
-  const organizers = state.eventOrganizers.filter((organizer) => organizer.eventId === event.id);
-
-  function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
-    formEvent.preventDefault();
-    const input = { title, assigneeId: Number(assigneeId), dueDate, description };
-    if (runAction(() => createTask(event.id, input), "The task was created and the assignee notified.")) {
-      setTitle("");
-      setDueDate("");
-      setDescription("");
-    }
-  }
-
-  return (
-    <CardSection title="New task" className="self-start">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Field label="Title" htmlFor="task-title">
-          <Input id="task-title" maxLength={255} value={title} onChange={(changeEvent) => setTitle(changeEvent.target.value)} />
-        </Field>
-        <Field label="Assigned to" htmlFor="task-assignee" hint="Only organizers of this event can be assigned.">
-          <Select id="task-assignee" value={assigneeId} onChange={(changeEvent) => setAssigneeId(changeEvent.target.value)}>
-            <option value="">Choose an organizer</option>
-            {organizers.map((organizer) => (
-              <option key={organizer.id} value={organizer.userId}>{userDisplayName(state, organizer.userId)}</option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="Due date (optional)" htmlFor="task-due-date">
-          <Input id="task-due-date" type="date" value={dueDate} onChange={(changeEvent) => setDueDate(changeEvent.target.value)} />
-        </Field>
-        <Field label="Description (optional)" htmlFor="task-description">
-          <Textarea
-            id="task-description"
-            maxLength={255}
-            rows={3}
-            value={description}
-            onChange={(changeEvent) => setDescription(changeEvent.target.value)}
-          />
-        </Field>
-        <Button type="submit" className="w-full" disabled={title.trim() === "" || assigneeId === ""}>
-          <Plus className="size-4" aria-hidden="true" />
-          Create task
-        </Button>
-      </form>
-    </CardSection>
   );
 }
 

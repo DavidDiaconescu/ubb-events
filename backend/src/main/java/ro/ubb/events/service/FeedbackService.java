@@ -3,6 +3,7 @@ package ro.ubb.events.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.ubb.events.security.AccessPolicy;
 import ro.ubb.events.domain.entity.Event;
 import ro.ubb.events.domain.entity.Feedback;
 import ro.ubb.events.domain.entity.User;
@@ -15,7 +16,6 @@ import ro.ubb.events.exception.ResourceNotFoundException;
 import ro.ubb.events.repository.EventRepository;
 import ro.ubb.events.repository.FeedbackRepository;
 import ro.ubb.events.repository.RegistrationRepository;
-import ro.ubb.events.repository.UserRepository;
 
 import java.time.Instant;
 import java.util.EnumSet;
@@ -36,13 +36,13 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final EventRepository eventRepository;
-    private final UserRepository userRepository;
     private final RegistrationRepository registrationRepository;
+    private final AccessPolicy accessPolicy;
 
     public List<FeedbackResponse> findByEvent(Long eventId) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new ResourceNotFoundException("Event", eventId);
-        }
+        eventRepository.findById(eventId)
+                .filter(accessPolicy::canViewEvent)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", eventId));
         return feedbackRepository.findAllByEventIdOrderBySubmittedAtDesc(eventId).stream()
                 .map(FeedbackResponse::from)
                 .toList();
@@ -52,8 +52,7 @@ public class FeedbackService {
     public FeedbackResponse create(Long eventId, CreateFeedbackRequest request) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", eventId));
-        User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", request.userId()));
+        User user = accessPolicy.currentUser();
 
         if (!FEEDBACK_EVENT_STATUSES.contains(event.getStatus())) {
             throw new ConflictException("Feedback can only be given after the event has finished");

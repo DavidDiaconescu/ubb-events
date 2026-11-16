@@ -54,6 +54,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
                         // UC-15/UC-16: visitors can browse events (but not their participants, tasks, ...)
                         .requestMatchers(HttpMethod.GET, "/api/events", "/api/events/{id}").permitAll()
+                        // Visitors also see who organizes an event and where it takes place
+                        .requestMatchers(HttpMethod.GET, "/api/organizations", "/api/organizations/{id}",
+                                "/api/venues", "/api/venues/{id}").permitAll()
                         .requestMatchers("/actuator/health", "/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/users/*/enabled").hasRole("ADMIN")

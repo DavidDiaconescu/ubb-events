@@ -17,6 +17,14 @@ public record RegistrationResponse(
         boolean lateCancellation
 ) {
 
+    /** The same registration with the check-in code hidden (for users other than its owner and the managers). */
+    public static RegistrationResponse withoutCheckInCode(Registration registration) {
+        RegistrationResponse response = from(registration);
+        return new RegistrationResponse(response.id(), response.eventId(), response.userId(), response.status(),
+                response.waitlistPosition(), null, response.registeredAt(), response.checkedInAt(),
+                response.lateCancellation());
+    }
+
     public static RegistrationResponse from(Registration registration) {
         return new RegistrationResponse(
                 registration.getId(),

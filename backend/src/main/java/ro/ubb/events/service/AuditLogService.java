@@ -3,6 +3,7 @@ package ro.ubb.events.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.ubb.events.security.AccessPolicy;
 import ro.ubb.events.domain.entity.AuditLog;
 import ro.ubb.events.dto.auditlog.AuditLogResponse;
 import ro.ubb.events.exception.InvalidRequestException;
@@ -20,12 +21,14 @@ import java.util.List;
 public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
+    private final AccessPolicy accessPolicy;
 
     /**
      * Without filters returns the whole audit trail; otherwise both {@code entityType}
      * and {@code entityId} must be given and only the entries of that entity are returned.
      */
     public List<AuditLogResponse> findAll(String entityType, Long entityId) {
+        accessPolicy.requireAdmin();
         boolean hasEntityType = entityType != null && !entityType.isBlank();
         boolean hasEntityId = entityId != null;
         if (hasEntityType != hasEntityId) {
@@ -42,6 +45,7 @@ public class AuditLogService {
     }
 
     public AuditLogResponse findById(Long id) {
+        accessPolicy.requireAdmin();
         AuditLog auditLog = auditLogRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Audit log", id));
         return AuditLogResponse.from(auditLog);

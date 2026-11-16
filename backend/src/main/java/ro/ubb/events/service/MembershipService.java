@@ -3,6 +3,7 @@ package ro.ubb.events.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.ubb.events.security.AccessPolicy;
 import ro.ubb.events.domain.entity.Membership;
 import ro.ubb.events.domain.entity.Organization;
 import ro.ubb.events.domain.entity.User;
@@ -31,6 +32,7 @@ public class MembershipService {
     private final MembershipRepository membershipRepository;
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
+    private final AccessPolicy accessPolicy;
 
     public List<MembershipResponse> findByOrganization(Long organizationId) {
         ensureOrganizationExists(organizationId);
@@ -50,10 +52,18 @@ public class MembershipService {
         return MembershipResponse.from(getMembership(id));
     }
 
+    /**
+     * A user may join an organization as a MEMBER; adding someone else, or adding a coordinator,
+     * is reserved to the organization's coordinators and to administrators.
+     */
     @Transactional
     public MembershipResponse create(Long organizationId, CreateMembershipRequest request) {
         Organization organization = organizationRepository.findById(organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization", organizationId));
+        boolean joinsAsMember = accessPolicy.isCurrentUser(request.userId()) && request.role() == OrgRole.MEMBER;
+        if (!joinsAsMember) {
+            accessPolicy.requireCoordinatorOrAdmin(organizationId);
+        }
         if (organization.getStatus() != OrgStatus.ACTIVE) {
             throw new ConflictException("Organization " + organizationId + " is suspended and cannot accept members");
         }
@@ -79,6 +89,7 @@ public class MembershipService {
     @Transactional
     public MembershipResponse updateRole(Long id, OrgRole role) {
         Membership membership = getMembership(id);
+        accessPolicy.requireCoordinatorOrAdmin(membership.getOrganization().getId());
         if (!membership.isActive()) {
             throw new ConflictException("Membership " + id + " is not active");
         }
@@ -86,9 +97,13 @@ public class MembershipService {
         return MembershipResponse.from(membership);
     }
 
+    /** Users leave an organization themselves; coordinators and administrators may remove members. */
     @Transactional
     public void deactivate(Long id) {
         Membership membership = getMembership(id);
+        if (!accessPolicy.isCurrentUser(membership.getUser().getId())) {
+            accessPolicy.requireCoordinatorOrAdmin(membership.getOrganization().getId());
+        }
         membership.setActive(false);
     }
 

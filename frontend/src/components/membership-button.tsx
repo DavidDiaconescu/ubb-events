@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { joinOrganization, leaveOrganization } from "@/lib/mock-api";
+import { joinOrganization, leaveOrganization } from "@/lib/actions";
 import { isActiveMember, isCoordinator } from "@/lib/permissions";
 import { useAppState, useCurrentUser } from "@/lib/store";
 import { runAction } from "@/lib/toast";

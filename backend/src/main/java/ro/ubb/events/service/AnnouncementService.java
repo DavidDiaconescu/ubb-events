@@ -3,6 +3,7 @@ package ro.ubb.events.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.ubb.events.security.AccessPolicy;
 import ro.ubb.events.domain.entity.Announcement;
 import ro.ubb.events.domain.entity.Event;
 import ro.ubb.events.domain.entity.EventOrganizer;
@@ -13,13 +14,11 @@ import ro.ubb.events.domain.enums.NotificationType;
 import ro.ubb.events.domain.enums.RegistrationStatus;
 import ro.ubb.events.dto.announcement.AnnouncementResponse;
 import ro.ubb.events.dto.announcement.CreateAnnouncementRequest;
-import ro.ubb.events.exception.InvalidRequestException;
 import ro.ubb.events.exception.ResourceNotFoundException;
 import ro.ubb.events.repository.AnnouncementRepository;
 import ro.ubb.events.repository.EventOrganizerRepository;
 import ro.ubb.events.repository.EventRepository;
 import ro.ubb.events.repository.RegistrationRepository;
-import ro.ubb.events.repository.UserRepository;
 
 import java.time.Instant;
 import java.util.EnumSet;
@@ -51,15 +50,15 @@ public class AnnouncementService {
 
     private final AnnouncementRepository announcementRepository;
     private final EventRepository eventRepository;
-    private final UserRepository userRepository;
     private final EventOrganizerRepository eventOrganizerRepository;
     private final RegistrationRepository registrationRepository;
     private final NotificationService notificationService;
+    private final AccessPolicy accessPolicy;
 
     public List<AnnouncementResponse> findByEvent(Long eventId) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new ResourceNotFoundException("Event", eventId);
-        }
+        eventRepository.findById(eventId)
+                .filter(accessPolicy::canViewEvent)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", eventId));
         return announcementRepository.findAllByEventIdOrderBySentAtDesc(eventId).stream()
                 .map(AnnouncementResponse::from)
                 .toList();
@@ -68,6 +67,9 @@ public class AnnouncementService {
     public AnnouncementResponse findById(Long id) {
         Announcement announcement = announcementRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Announcement", id));
+        if (!accessPolicy.canViewEvent(announcement.getEvent())) {
+            throw new ResourceNotFoundException("Announcement", id);
+        }
         return AnnouncementResponse.from(announcement);
     }
 
@@ -75,12 +77,8 @@ public class AnnouncementService {
     public AnnouncementResponse create(Long eventId, CreateAnnouncementRequest request) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", eventId));
-        User author = userRepository.findById(request.authorId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", request.authorId()));
-
-        if (!eventOrganizerRepository.existsByEventIdAndUserId(eventId, author.getId())) {
-            throw new InvalidRequestException("Only organizers of the event can publish announcements");
-        }
+        accessPolicy.requireEventManager(event);
+        User author = accessPolicy.currentUser();
 
         Announcement announcement = new Announcement();
         announcement.setEvent(event);

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { MockApiError } from "./mock-api";
+import { ApiError } from "./api";
 
 export type ToastTone = "success" | "error";
 
@@ -44,16 +44,16 @@ export function useToasts(): Toast[] {
 }
 
 /**
- * Runs a mock API call and reports the outcome with a toast.
- * Returns true if the call succeeded. Unexpected errors are re-thrown.
+ * Runs an API call and reports the outcome with a toast.
+ * Resolves to true if the call succeeded. Unexpected errors are re-thrown.
  */
-export function runAction(action: () => void, successMessage?: string): boolean {
+export async function runAction(action: () => Promise<unknown>, successMessage?: string): Promise<boolean> {
   try {
-    action();
+    await action();
     if (successMessage) showToast(successMessage, "success");
     return true;
   } catch (error) {
-    if (error instanceof MockApiError) {
+    if (error instanceof ApiError) {
       showToast(error.message, "error");
       return false;
     }

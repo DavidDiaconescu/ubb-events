@@ -1,6 +1,6 @@
 /**
  * Domain types. They mirror the response DTOs of the Spring Boot backend
- * (ro.ubb.events.dto.*), so the mock data layer can later be replaced by real API calls.
+ * (ro.ubb.events.dto.*).
  */
 
 export type GlobalRole = "USER" | "ADMIN";
@@ -125,7 +125,8 @@ export interface Registration {
   userId: number;
   status: RegistrationStatus;
   waitlistPosition: number | null;
-  checkInCode: string;
+  /** Visible only to the participant and to the event managers; null for everyone else. */
+  checkInCode: string | null;
   registeredAt: IsoDateTime;
   checkedInAt: IsoDateTime | null;
   lateCancellation: boolean;
@@ -167,15 +168,15 @@ export interface AppNotification {
 export interface Feedback {
   id: number;
   eventId: number;
-  /** Always stored; hidden in the UI when the feedback is anonymous (the backend returns null). */
-  userId: number;
+  /** Null when the feedback is anonymous (the backend hides the author). */
+  userId: number | null;
   rating: number;
   comment: string | null;
   anonymous: boolean;
   submittedAt: IsoDateTime;
 }
 
-/** Everything the mock data layer keeps in memory. */
+/** The data loaded from the backend (see store.ts). */
 export interface AppState {
   currentUserId: number | null;
   users: User[];

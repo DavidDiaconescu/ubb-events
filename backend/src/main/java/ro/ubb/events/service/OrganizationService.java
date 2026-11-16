@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.ubb.events.security.AccessPolicy;
 import ro.ubb.events.domain.entity.Organization;
 import ro.ubb.events.domain.enums.OrgStatus;
 import ro.ubb.events.dto.organization.OrganizationRequest;
@@ -20,6 +21,7 @@ import java.util.List;
 public class OrganizationService {
 
     private final OrganizationRepository organizationRepository;
+    private final AccessPolicy accessPolicy;
 
     public List<OrganizationResponse> findAll() {
         return organizationRepository.findAll(Sort.by("name")).stream()
@@ -33,6 +35,7 @@ public class OrganizationService {
 
     @Transactional
     public OrganizationResponse create(OrganizationRequest request) {
+        accessPolicy.requireAdmin();
         String name = request.name().trim();
         if (organizationRepository.existsByNameIgnoreCase(name)) {
             throw new ConflictException("An organization named '" + name + "' already exists");
@@ -48,6 +51,7 @@ public class OrganizationService {
     @Transactional
     public OrganizationResponse update(Long id, OrganizationRequest request) {
         Organization organization = getOrganization(id);
+        accessPolicy.requireCoordinatorOrAdmin(id);
 
         String name = request.name().trim();
         if (organizationRepository.existsByNameIgnoreCaseAndIdNot(name, id)) {
@@ -60,6 +64,7 @@ public class OrganizationService {
 
     @Transactional
     public OrganizationResponse updateStatus(Long id, OrgStatus status) {
+        accessPolicy.requireAdmin();
         Organization organization = getOrganization(id);
         organization.setStatus(status);
         return OrganizationResponse.from(organization);

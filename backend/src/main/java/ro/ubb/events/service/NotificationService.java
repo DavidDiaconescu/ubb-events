@@ -3,6 +3,7 @@ package ro.ubb.events.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.ubb.events.security.AccessPolicy;
 import ro.ubb.events.domain.entity.Event;
 import ro.ubb.events.domain.entity.Notification;
 import ro.ubb.events.domain.entity.User;
@@ -30,8 +31,10 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final AccessPolicy accessPolicy;
 
     public List<NotificationResponse> findByRecipient(Long recipientId, boolean unreadOnly) {
+        accessPolicy.requireSelf(recipientId);
         ensureUserExists(recipientId);
 
         List<Notification> notifications = unreadOnly
@@ -45,20 +48,21 @@ public class NotificationService {
 
     @Transactional
     public NotificationResponse markAsRead(Long id) {
-        Notification notification = getNotification(id);
+        Notification notification = getOwnNotification(id);
         notification.setRead(true);
         return NotificationResponse.from(notification);
     }
 
     @Transactional
     public void markAllAsRead(Long recipientId) {
+        accessPolicy.requireSelf(recipientId);
         ensureUserExists(recipientId);
         notificationRepository.markAllAsReadForRecipient(recipientId);
     }
 
     @Transactional
     public void delete(Long id) {
-        notificationRepository.delete(getNotification(id));
+        notificationRepository.delete(getOwnNotification(id));
     }
 
     /**
@@ -83,9 +87,12 @@ public class NotificationService {
         }
     }
 
-    private Notification getNotification(Long id) {
-        return notificationRepository.findById(id)
+    /** Notifications are private: only their recipient can read or delete them. */
+    private Notification getOwnNotification(Long id) {
+        Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification", id));
+        accessPolicy.requireSelf(notification.getRecipient().getId());
+        return notification;
     }
 
     private void ensureUserExists(Long userId) {

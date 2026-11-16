@@ -3,6 +3,7 @@ package ro.ubb.events.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.ubb.events.security.AccessPolicy;
 import ro.ubb.events.domain.entity.Event;
 import ro.ubb.events.domain.entity.Registration;
 import ro.ubb.events.domain.entity.User;
@@ -12,18 +13,20 @@ import ro.ubb.events.domain.enums.RegistrationStatus;
 import ro.ubb.events.domain.enums.Visibility;
 import ro.ubb.events.dto.registration.RegistrationResponse;
 import ro.ubb.events.exception.ConflictException;
+import ro.ubb.events.exception.ForbiddenException;
 import ro.ubb.events.exception.ResourceNotFoundException;
 import ro.ubb.events.repository.EventRepository;
 import ro.ubb.events.repository.MembershipRepository;
 import ro.ubb.events.repository.RegistrationRepository;
 import ro.ubb.events.repository.UserRepository;
 
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Handles registrations, the waitlist and check-in.
@@ -40,6 +43,14 @@ public class RegistrationService {
     private static final Set<RegistrationStatus> ACTIVE_STATUSES =
             EnumSet.of(RegistrationStatus.CONFIRMED, RegistrationStatus.WAITLISTED);
 
+    /** Letters and digits that cannot be confused when read aloud (no I, O, 0, 1). */
+    private static final String CHECK_IN_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    /** Registrations that occupy one of the event places. */
+    private static final Set<RegistrationStatus> TAKEN_PLACE_STATUSES =
+            EnumSet.of(RegistrationStatus.CONFIRMED, RegistrationStatus.ATTENDED);
+
     /** Cancelling less than this long before the event start is recorded as a late cancellation. */
     private static final Duration LATE_CANCELLATION_WINDOW = Duration.ofHours(24);
 
@@ -52,17 +63,26 @@ public class RegistrationService {
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
     private final NotificationService notificationService;
+    private final AccessPolicy accessPolicy;
 
+    /**
+     * Every signed-in user sees who is registered (needed for the capacity and the waitlist), but a check-in
+     * code is shown only to its owner and to the event's managers, because it proves attendance.
+     */
     public List<RegistrationResponse> findByEvent(Long eventId) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new ResourceNotFoundException("Event", eventId);
-        }
+        Event event = eventRepository.findById(eventId)
+                .filter(accessPolicy::canViewEvent)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", eventId));
+        boolean isManager = accessPolicy.canManageEvent(event);
         return registrationRepository.findAllByEventIdOrderByRegisteredAtAsc(eventId).stream()
-                .map(RegistrationResponse::from)
+                .map(registration -> isManager || accessPolicy.isCurrentUser(registration.getUser().getId())
+                        ? RegistrationResponse.from(registration)
+                        : RegistrationResponse.withoutCheckInCode(registration))
                 .toList();
     }
 
     public List<RegistrationResponse> findByUser(Long userId) {
+        accessPolicy.requireSelfOrAdmin(userId);
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("User", userId);
         }
@@ -72,30 +92,33 @@ public class RegistrationService {
     }
 
     public RegistrationResponse findById(Long id) {
-        return RegistrationResponse.from(getRegistration(id));
+        Registration registration = getRegistration(id);
+        requireOwnerOrManager(registration);
+        return RegistrationResponse.from(registration);
     }
 
     /**
-     * Registers a user for an event. The registration is CONFIRMED while there are free places,
+     * Registers the current user for an event. The registration is CONFIRMED while there are free places,
      * otherwise the user is added at the end of the waitlist.
      */
     @Transactional
-    public RegistrationResponse register(Long eventId, Long userId) {
+    public RegistrationResponse register(Long eventId) {
+        User user = accessPolicy.currentUser();
         Event event = lockEvent(eventId);
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+        if (!accessPolicy.canViewEvent(event)) {
+            throw new ResourceNotFoundException("Event", eventId);
+        }
 
         ensureCanRegister(event, user);
 
         Registration registration = new Registration();
         registration.setEvent(event);
         registration.setUser(user);
-        registration.setCheckInCode(UUID.randomUUID().toString());
+        registration.setCheckInCode(generateCheckInCode());
         registration.setRegisteredAt(Instant.now());
         registration.setLateCancellation(false);
 
-        long confirmedCount = registrationRepository.countByEventIdAndStatus(eventId, RegistrationStatus.CONFIRMED);
-        if (confirmedCount < event.getCapacity()) {
+        if (countTakenPlaces(eventId) < event.getCapacity()) {
             registration.setStatus(RegistrationStatus.CONFIRMED);
             notificationService.send(user, event, NotificationType.REGISTRATION_CONFIRMED,
                     "Your registration for '" + event.getTitle() + "' is confirmed.");
@@ -118,6 +141,10 @@ public class RegistrationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Registration", id));
         Event event = lockEvent(eventId);
         Registration registration = getRegistration(id);
+        // Participants cancel their own registration; an administrator may cancel any registration.
+        if (!accessPolicy.isAdmin() && !accessPolicy.isCurrentUser(registration.getUser().getId())) {
+            throw new ForbiddenException("You can only cancel your own registration");
+        }
 
         if (!ACTIVE_STATUSES.contains(registration.getStatus())) {
             throw new ConflictException("Registration " + id + " cannot be cancelled because its status is "
@@ -147,11 +174,12 @@ public class RegistrationService {
     public RegistrationResponse checkIn(Long eventId, String checkInCode) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", eventId));
+        accessPolicy.requireEventManager(event);
         if (!CHECK_IN_EVENT_STATUSES.contains(event.getStatus())) {
             throw new ConflictException("Check-in is not possible while the event is " + event.getStatus());
         }
 
-        Registration registration = registrationRepository.findByEventIdAndCheckInCode(eventId, checkInCode.trim())
+        Registration registration = registrationRepository.findByEventIdAndCheckInCode(eventId, checkInCode.trim().toUpperCase(Locale.ROOT))
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "No registration with this check-in code exists for event " + eventId));
 
@@ -174,8 +202,7 @@ public class RegistrationService {
      */
     @Transactional
     public void fillFreePlacesFromWaitlist(Event event) {
-        long confirmedCount = registrationRepository.countByEventIdAndStatus(event.getId(), RegistrationStatus.CONFIRMED);
-        long freePlaces = event.getCapacity() - confirmedCount;
+        long freePlaces = event.getCapacity() - countTakenPlaces(event.getId());
 
         List<Registration> waitlist = registrationRepository
                 .findAllByEventIdAndStatusOrderByWaitlistPositionAsc(event.getId(), RegistrationStatus.WAITLISTED);
@@ -224,6 +251,13 @@ public class RegistrationService {
     }
 
     /**
+     * Places in use: confirmed participants plus those already checked in (a place stays taken after check-in).
+     */
+    public long countTakenPlaces(Long eventId) {
+        return registrationRepository.countByEventIdAndStatusIn(eventId, TAKEN_PLACE_STATUSES);
+    }
+
+    /**
      * Users holding a place or a waitlist position for the event.
      */
     public List<User> findActiveParticipants(Long eventId) {
@@ -268,6 +302,22 @@ public class RegistrationService {
         for (Registration registration : waitlist) {
             registration.setWaitlistPosition(position++);
         }
+    }
+
+    private void requireOwnerOrManager(Registration registration) {
+        if (!accessPolicy.isCurrentUser(registration.getUser().getId())
+                && !accessPolicy.canManageEvent(registration.getEvent())) {
+            throw new ForbiddenException("You are not allowed to see this registration");
+        }
+    }
+
+    /** A short code that is easy to read out at the entrance, such as "UBB-7K2Q-41" (BR-21: unique). */
+    static String generateCheckInCode() {
+        StringBuilder code = new StringBuilder("UBB-");
+        for (int i = 0; i < 4; i++) {
+            code.append(CHECK_IN_ALPHABET.charAt(RANDOM.nextInt(CHECK_IN_ALPHABET.length())));
+        }
+        return code.append("-").append(RANDOM.nextInt(10)).append(RANDOM.nextInt(10)).toString();
     }
 
     private Event lockEvent(Long eventId) {

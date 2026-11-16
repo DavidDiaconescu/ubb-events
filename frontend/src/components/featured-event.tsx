@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CapacityMeter } from "@/components/capacity-meter";
 import { CategoryBadge } from "@/components/status-badges";
+import { IconLabel } from "@/components/ui/icon-label";
 import { categoryPhotoUrl } from "@/lib/event-photos";
 import { formatEventTime } from "@/lib/format";
 import { useNow } from "@/lib/hooks";
@@ -70,14 +71,8 @@ export function FeaturedEvent({ event }: { event: UbbEvent }) {
           <p className="mt-4 line-clamp-3 text-foreground/80">{event.description}</p>
 
           <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
-            <span className="inline-flex items-center gap-1.5">
-              <Clock className="size-4 shrink-0" aria-hidden="true" />
-              {formatEventTime(event.startTime, event.endTime)}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="size-4 shrink-0" aria-hidden="true" />
-              {venueLabel(state, event.venueId)}
-            </span>
+            <IconLabel icon={Clock}>{formatEventTime(event.startTime, event.endTime)}</IconLabel>
+            <IconLabel icon={MapPin}>{venueLabel(state, event.venueId)}</IconLabel>
           </div>
 
           <div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between md:mt-auto md:pt-6">

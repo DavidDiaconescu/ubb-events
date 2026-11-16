@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ro.ubb.events.dto.registration.CheckInRequest;
-import ro.ubb.events.dto.registration.CreateRegistrationRequest;
 import ro.ubb.events.dto.registration.RegistrationResponse;
 import ro.ubb.events.service.RegistrationService;
 
@@ -31,9 +30,8 @@ public class RegistrationController {
 
     @PostMapping("/events/{eventId}/registrations")
     @ResponseStatus(HttpStatus.CREATED)
-    public RegistrationResponse register(@PathVariable Long eventId,
-                                         @Valid @RequestBody CreateRegistrationRequest request) {
-        return registrationService.register(eventId, request.userId());
+    public RegistrationResponse register(@PathVariable Long eventId) {
+        return registrationService.register(eventId);
     }
 
     @PostMapping("/events/{eventId}/check-in")

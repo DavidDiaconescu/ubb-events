@@ -2,14 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
-import { EventForm } from "@/components/event-form";
+import { EventForm } from "@/components/event-form/event-form";
 import { NotFoundMessage, parseId } from "@/components/not-found-message";
 import { Notice } from "@/components/ui/feedback";
 import { PageHeader } from "@/components/ui/page-header";
 import { EDITABLE_STATUSES } from "@/lib/event-lifecycle";
 import type { EventInput } from "@/lib/event-validation";
 import { EVENT_STATUS_LABELS } from "@/lib/labels";
-import { updateEvent } from "@/lib/mock-api";
+import { updateEvent } from "@/lib/actions";
 import { canManageEvent } from "@/lib/permissions";
 import { findEventById } from "@/lib/queries";
 import { useAppState, useCurrentUser } from "@/lib/store";
@@ -55,8 +55,8 @@ function EditEventForm({ event }: { event: UbbEvent }) {
   const [loadedVersion] = useState(event.version);
   const organization = state.organizations.filter((item) => item.id === event.organizationId);
 
-  function handleSubmit(input: EventInput) {
-    if (runAction(() => updateEvent(event.id, input, loadedVersion), "The event was updated.")) {
+  async function handleSubmit(input: EventInput) {
+    if (await runAction(() => updateEvent(event.id, input, loadedVersion), "The event was updated.")) {
       router.push(`/manage/events/${event.id}`);
     }
   }

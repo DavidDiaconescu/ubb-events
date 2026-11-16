@@ -3,6 +3,7 @@ package ro.ubb.events;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.springframework.test.context.DynamicPropertyRegistrar;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
@@ -18,5 +19,11 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     PostgreSQLContainer postgresContainer() {
         return new PostgreSQLContainer("postgres:16-alpine");
+    }
+
+    /** Tests create their own data, so the demo data (db/demo) is not loaded. */
+    @Bean
+    DynamicPropertyRegistrar schemaOnlyMigrations() {
+        return registry -> registry.add("spring.flyway.locations", () -> "classpath:db/migration");
     }
 }

@@ -12,8 +12,6 @@ import java.time.Instant;
 public record CreateEventRequest(
         @NotNull Long organizationId,
         Long venueId,
-        // TODO: replace with the authenticated user once authentication is implemented
-        @NotNull Long createdById,
         @NotBlank @Size(max = 255) String title,
         @NotBlank String description,
         @NotNull EventCategory category,

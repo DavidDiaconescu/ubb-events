@@ -3,6 +3,7 @@ package ro.ubb.events.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.ubb.events.security.AccessPolicy;
 import ro.ubb.events.domain.entity.Event;
 import ro.ubb.events.domain.entity.Task;
 import ro.ubb.events.domain.entity.User;
@@ -33,17 +34,20 @@ public class TaskService {
     private final UserRepository userRepository;
     private final EventOrganizerRepository eventOrganizerRepository;
     private final NotificationService notificationService;
+    private final AccessPolicy accessPolicy;
 
+    /** Tasks are internal to the organizing team. */
     public List<TaskResponse> findByEvent(Long eventId) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new ResourceNotFoundException("Event", eventId);
-        }
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", eventId));
+        accessPolicy.requireEventManager(event);
         return taskRepository.findAllByEventIdOrderByIdAsc(eventId).stream()
                 .map(TaskResponse::from)
                 .toList();
     }
 
     public List<TaskResponse> findByAssignee(Long assigneeId) {
+        accessPolicy.requireSelfOrAdmin(assigneeId);
         if (!userRepository.existsById(assigneeId)) {
             throw new ResourceNotFoundException("User", assigneeId);
         }
@@ -53,13 +57,18 @@ public class TaskService {
     }
 
     public TaskResponse findById(Long id) {
-        return TaskResponse.from(getTask(id));
+        Task task = getTask(id);
+        if (!accessPolicy.isCurrentUser(task.getAssignee().getId())) {
+            accessPolicy.requireEventManager(task.getEvent());
+        }
+        return TaskResponse.from(task);
     }
 
     @Transactional
     public TaskResponse create(Long eventId, TaskRequest request) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", eventId));
+        accessPolicy.requireEventManager(event);
         User assignee = getOrganizerOfEvent(eventId, request.assigneeId());
 
         Task task = new Task();
@@ -75,6 +84,7 @@ public class TaskService {
     @Transactional
     public TaskResponse update(Long id, TaskRequest request) {
         Task task = getTask(id);
+        accessPolicy.requireEventManager(task.getEvent());
         User assignee = getOrganizerOfEvent(task.getEvent().getId(), request.assigneeId());
         boolean assigneeChanged = !Objects.equals(task.getAssignee().getId(), assignee.getId());
 
@@ -86,16 +96,22 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
+    /** The assignee may update the progress of their own task. */
     @Transactional
     public TaskResponse updateStatus(Long id, TaskStatus status) {
         Task task = getTask(id);
+        if (!accessPolicy.isCurrentUser(task.getAssignee().getId())) {
+            accessPolicy.requireEventManager(task.getEvent());
+        }
         task.setStatus(status);
         return TaskResponse.from(task);
     }
 
     @Transactional
     public void delete(Long id) {
-        taskRepository.delete(getTask(id));
+        Task task = getTask(id);
+        accessPolicy.requireEventManager(task.getEvent());
+        taskRepository.delete(task);
     }
 
     private User getOrganizerOfEvent(Long eventId, Long userId) {

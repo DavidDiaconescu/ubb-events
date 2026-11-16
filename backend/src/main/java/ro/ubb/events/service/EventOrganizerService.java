@@ -3,6 +3,7 @@ package ro.ubb.events.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.ubb.events.security.AccessPolicy;
 import ro.ubb.events.domain.entity.Event;
 import ro.ubb.events.domain.entity.EventOrganizer;
 import ro.ubb.events.domain.entity.User;
@@ -24,11 +25,12 @@ public class EventOrganizerService {
     private final EventOrganizerRepository eventOrganizerRepository;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final AccessPolicy accessPolicy;
 
     public List<EventOrganizerResponse> findByEvent(Long eventId) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new ResourceNotFoundException("Event", eventId);
-        }
+        eventRepository.findById(eventId)
+                .filter(accessPolicy::canViewEvent)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", eventId));
         return eventOrganizerRepository.findAllByEventIdOrderByIdAsc(eventId).stream()
                 .map(EventOrganizerResponse::from)
                 .toList();
@@ -38,6 +40,7 @@ public class EventOrganizerService {
     public EventOrganizerResponse add(Long eventId, CreateEventOrganizerRequest request) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", eventId));
+        accessPolicy.requireEventManager(event);
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", request.userId()));
 
@@ -60,6 +63,7 @@ public class EventOrganizerService {
     public void remove(Long id) {
         EventOrganizer eventOrganizer = eventOrganizerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event organizer", id));
+        accessPolicy.requireEventManager(eventOrganizer.getEvent());
         eventOrganizerRepository.delete(eventOrganizer);
     }
 }

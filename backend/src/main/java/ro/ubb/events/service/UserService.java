@@ -5,6 +5,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ro.ubb.events.security.AccessPolicy;
 import ro.ubb.events.domain.entity.User;
 import ro.ubb.events.domain.enums.GlobalRole;
 import ro.ubb.events.dto.user.CreateUserRequest;
@@ -24,6 +25,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AccessPolicy accessPolicy;
 
     public List<UserResponse> findAll() {
         return userRepository.findAll(Sort.by("id")).stream()
@@ -60,6 +62,7 @@ public class UserService {
 
     @Transactional
     public UserResponse update(Long id, UpdateUserRequest request) {
+        accessPolicy.requireSelfOrAdmin(id);
         User user = getUser(id);
         user.setFirstName(request.firstName());
         user.setLastName(request.lastName());
@@ -70,6 +73,10 @@ public class UserService {
 
     @Transactional
     public UserResponse setEnabled(Long id, boolean enabled) {
+        accessPolicy.requireAdmin();
+        if (!enabled && accessPolicy.isCurrentUser(id)) {
+            throw new ConflictException("You cannot disable your own account");
+        }
         User user = getUser(id);
         user.setEnabled(enabled);
         return UserResponse.from(user);
