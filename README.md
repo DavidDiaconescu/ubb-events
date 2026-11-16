@@ -50,6 +50,7 @@ Run each step from the repository root, using a separate PowerShell terminal for
    cd frontend; npm install; npm run dev
    ```
 
+<<<<<<< Updated upstream
 ## Running the tests
 
 ```powershell
@@ -94,6 +95,14 @@ A ready-made collection with all the authentication scenarios is in
 Import it in Postman and, with the backend running, use **Run collection**: every request has tests for the expected
 status, and the login request saves the token automatically for the protected requests. Accounts persist in the
 database, so change the collection variable `email` before running it again.
+=======
+### Configuration
+
+The defaults work with the local database from `docker-compose.yml`, so no configuration is needed to get started.
+
+- **Backend:** to use another database, set `DB_URL`, `DB_USERNAME` and `DB_PASSWORD` as environment variables. Spring Boot does not load `.env` files.
+- **Frontend:** create `frontend/.env.local` and set `NEXT_PUBLIC_API_URL` there, as shown in `.env.example`. Next.js only reads env files from its own folder.
+>>>>>>> Stashed changes
 
 ## Team
 
