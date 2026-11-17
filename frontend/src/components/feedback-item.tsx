@@ -9,7 +9,10 @@ import type { Feedback } from "@/lib/types";
 /** One participant review: stars, author (or "Anonymous"), date and comment. */
 export function FeedbackItem({ feedback, className = "" }: { feedback: Feedback; className?: string }) {
   const state = useAppState();
-  const author = feedback.userId === null ? "Anonymous" : userDisplayName(state, feedback.userId);
+  // The backend still tells the author which anonymous review is theirs, so check `anonymous`, not `userId`.
+  const author = feedback.anonymous || feedback.userId === null
+    ? feedback.userId !== null && feedback.userId === state.currentUserId ? "Anonymous (you)" : "Anonymous"
+    : userDisplayName(state, feedback.userId);
 
   return (
     <li className={`text-sm ${className}`}>

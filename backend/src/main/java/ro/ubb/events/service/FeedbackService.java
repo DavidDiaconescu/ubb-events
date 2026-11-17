@@ -43,8 +43,9 @@ public class FeedbackService {
         eventRepository.findById(eventId)
                 .filter(accessPolicy::canViewEvent)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", eventId));
+        Long viewerId = accessPolicy.currentUserIdIfAuthenticated().orElse(null);
         return feedbackRepository.findAllByEventIdOrderBySubmittedAtDesc(eventId).stream()
-                .map(FeedbackResponse::from)
+                .map(feedback -> FeedbackResponse.from(feedback, viewerId))
                 .toList();
     }
 
@@ -72,6 +73,6 @@ public class FeedbackService {
         feedback.setAnonymous(request.anonymous());
         feedback.setSubmittedAt(Instant.now());
 
-        return FeedbackResponse.from(feedbackRepository.save(feedback));
+        return FeedbackResponse.from(feedbackRepository.save(feedback), user.getId());
     }
 }

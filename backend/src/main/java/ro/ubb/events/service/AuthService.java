@@ -9,6 +9,7 @@ import ro.ubb.events.dto.auth.LoginRequest;
 import ro.ubb.events.dto.auth.LoginResponse;
 import ro.ubb.events.dto.user.CreateUserRequest;
 import ro.ubb.events.dto.user.UserResponse;
+import ro.ubb.events.exception.ForbiddenException;
 import ro.ubb.events.security.AppUserPrincipal;
 import ro.ubb.events.security.JwtService;
 
@@ -40,7 +41,15 @@ public class AuthService {
         return LoginResponse.bearer(token.value(), token.expiresAt(), userService.findById(principal.id()));
     }
 
+    /**
+     * A token stays valid until it expires, so an account disabled after sign-in is rejected here (403):
+     * the frontend then drops the token instead of showing a session in which every action fails.
+     */
     public UserResponse currentUser(Long userId) {
-        return userService.findById(userId);
+        UserResponse user = userService.findById(userId);
+        if (!user.enabled()) {
+            throw new ForbiddenException("This account is disabled");
+        }
+        return user;
     }
 }

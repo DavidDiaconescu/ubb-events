@@ -58,10 +58,14 @@ export async function apiRequest<T = void>(method: Method, path: string, body?: 
   if (!response.ok) {
     throw new ApiError(await errorMessage(response), response.status);
   }
-  if (response.status === 204 || response.headers.get("Content-Length") === "0") {
-    return undefined as T;
+  // Read the body as text: an empty 200 response (e.g. chunked, without Content-Length) is not valid JSON.
+  const text = await response.text();
+  if (text === "") return undefined as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new ApiError("The server sent a response that could not be read.", response.status);
   }
-  return (await response.json()) as T;
 }
 
 export const api = {

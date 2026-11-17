@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { api, ApiError, getToken, setToken } from "./api";
+import { canManageEvent } from "./permissions";
 import type {
   Announcement,
   AppNotification,
@@ -111,28 +112,42 @@ async function loadState(): Promise<AppState> {
     return { ...EMPTY_STATE, events, organizations, venues };
   }
 
-  const [users, notifications, memberships, perEvent] = await Promise.all([
+  const [users, notifications, membershipLists, organizerLists, perEvent, assignedTasks] = await Promise.all([
     api.get<User[]>("/api/users"),
     optional(api.get<AppNotification[]>(`/api/users/${currentUser.id}/notifications`)),
     Promise.all(organizations.map((organization) =>
       optional(api.get<Membership[]>(`/api/organizations/${organization.id}/memberships`)))),
+    Promise.all(events.map((event) => optional(api.get<EventOrganizer[]>(`/api/events/${event.id}/organizers`)))),
     Promise.all(events.map((event) => loadEventDetails(event.id))),
+    optional(api.get<Task[]>(`/api/users/${currentUser.id}/tasks`)),
   ]);
+  const memberships = membershipLists.flat();
+  const eventOrganizers = organizerLists.flat();
+
+  // The task list of an event is only readable by its managers: asking for the others would just fail with 403.
+  const managed = { ...EMPTY_STATE, memberships, eventOrganizers };
+  const managedTaskLists = await Promise.all(events
+    .filter((event) => canManageEvent(managed, currentUser, event))
+    .map((event) => optional(api.get<Task[]>(`/api/events/${event.id}/tasks`))));
 
   return {
     currentUserId: currentUser.id,
     users,
     organizations,
-    memberships: memberships.flat(),
+    memberships,
     venues,
     events,
-    eventOrganizers: perEvent.flatMap((details) => details.organizers),
+    eventOrganizers,
     registrations: perEvent.flatMap((details) => details.registrations),
-    tasks: perEvent.flatMap((details) => details.tasks),
+    tasks: uniqueById([...managedTaskLists.flat(), ...assignedTasks]),
     announcements: perEvent.flatMap((details) => details.announcements),
     notifications,
     feedback: perEvent.flatMap((details) => details.feedback),
   };
+}
+
+function uniqueById<T extends { id: number }>(items: T[]): T[] {
+  return [...new Map(items.map((item) => [item.id, item])).values()];
 }
 
 async function loadCurrentUser(): Promise<User | null> {
@@ -150,14 +165,12 @@ async function loadCurrentUser(): Promise<User | null> {
 }
 
 async function loadEventDetails(eventId: number) {
-  const [organizers, registrations, tasks, announcements, feedback] = await Promise.all([
-    optional(api.get<EventOrganizer[]>(`/api/events/${eventId}/organizers`)),
+  const [registrations, announcements, feedback] = await Promise.all([
     optional(api.get<Registration[]>(`/api/events/${eventId}/registrations`)),
-    optional(api.get<Task[]>(`/api/events/${eventId}/tasks`)),
     optional(api.get<Announcement[]>(`/api/events/${eventId}/announcements`)),
     optional(api.get<Feedback[]>(`/api/events/${eventId}/feedback`)),
   ]);
-  return { organizers, registrations, tasks, announcements, feedback };
+  return { registrations, announcements, feedback };
 }
 
 /** Data the current user is not allowed to see (401/403) or that is missing (404) is simply left out. */

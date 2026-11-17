@@ -17,11 +17,17 @@ public record FeedbackResponse(
         Instant submittedAt
 ) {
 
-    public static FeedbackResponse from(Feedback feedback) {
+    /**
+     * The author of an anonymous review is hidden from everyone except the author, who needs to recognize
+     * their own review (for example to know that they have already given feedback).
+     */
+    public static FeedbackResponse from(Feedback feedback, Long viewerId) {
+        Long authorId = feedback.getUser().getId();
+        boolean showAuthor = !feedback.isAnonymous() || authorId.equals(viewerId);
         return new FeedbackResponse(
                 feedback.getId(),
                 feedback.getEvent().getId(),
-                feedback.isAnonymous() ? null : feedback.getUser().getId(),
+                showAuthor ? authorId : null,
                 feedback.getRating(),
                 feedback.getComment(),
                 feedback.isAnonymous(),

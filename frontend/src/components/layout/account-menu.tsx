@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { ButtonLink } from "@/components/ui/button";
+import { Dropdown } from "@/components/ui/dropdown";
 import { signOut } from "@/lib/actions";
 import { fullName } from "@/lib/format";
 import { describeRole } from "@/lib/permissions";
@@ -44,12 +45,16 @@ export function AccountMenu() {
         )}
       </Link>
 
-      <details className="relative">
-        <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg p-1 hover:bg-white/10 [&::-webkit-details-marker]:hidden">
-          <Avatar user={user} className="bg-white text-navy" />
-          <span className="hidden max-w-40 truncate text-sm font-medium sm:block">{fullName(user)}</span>
-        </summary>
-        <div className="absolute right-0 mt-2 w-64 rounded-xl border border-border bg-surface p-2 text-foreground shadow-lg">
+      <Dropdown
+        triggerClassName="flex items-center gap-2 rounded-lg p-1 hover:bg-white/10"
+        panelClassName="absolute right-0 mt-2 w-64 rounded-xl border border-border bg-surface p-2 text-foreground shadow-lg"
+        trigger={
+          <>
+            <Avatar user={user} className="bg-white text-navy" />
+            <span className="hidden max-w-40 truncate text-sm font-medium sm:block">{fullName(user)}</span>
+          </>
+        }
+      >
           <div className="border-b border-border px-3 pb-3 pt-1">
             <p className="truncate text-sm font-medium">{fullName(user)}</p>
             <p className="truncate text-xs text-muted">{user.email}</p>
@@ -67,8 +72,7 @@ export function AccountMenu() {
             <LogOut className="size-4" aria-hidden="true" />
             Sign out
           </button>
-        </div>
-      </details>
+      </Dropdown>
     </div>
   );
 }

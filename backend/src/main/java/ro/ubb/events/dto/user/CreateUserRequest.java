@@ -15,9 +15,9 @@ public record CreateUserRequest(
         @NotBlank @Email @UbbEmail @Size(max = 255) String email,
         // BCrypt only uses the first 72 bytes of a password
         @NotBlank
-        @Size(min = 8, max = 72, message = "Parola trebuie să aibă între 8 și 72 de caractere")
+        @Size(min = 8, max = 72, message = "The password must have between 8 and 72 characters")
         @Pattern(regexp = "^(?=.*\\p{L})(?=.*\\d).*$",
-                message = "Parola trebuie să conțină cel puțin o literă și o cifră")
+                message = "The password must contain at least one letter and one digit")
         String password,
         @NotBlank @Size(max = 255) String firstName,
         @NotBlank @Size(max = 255) String lastName,

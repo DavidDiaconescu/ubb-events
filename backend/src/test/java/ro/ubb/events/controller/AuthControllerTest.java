@@ -33,7 +33,7 @@ class AuthControllerTest {
 
     private static final String EMAIL = "ana.pop@stud.ubbcluj.ro";
     private static final String PASSWORD = "Parola123";
-    private static final String BAD_CREDENTIALS = "Email sau parolă greșite";
+    private static final String BAD_CREDENTIALS = "Incorrect e-mail or password";
 
     @Autowired
     private MockMvc mockMvc;
@@ -140,7 +140,7 @@ class AuthControllerTest {
 
         login(EMAIL, PASSWORD)
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.detail").value("Contul este dezactivat"));
+                .andExpect(jsonPath("$.detail").value("This account is disabled"));
     }
 
     // ---------- NFR-04 authorization ----------
@@ -163,6 +163,19 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userRepository.findByEmail(EMAIL).orElseThrow().getId()))
                 .andExpect(jsonPath("$.email").value(EMAIL));
+    }
+
+    @Test
+    void NFR04_me_accountDisabledAfterSignIn_returns403() throws Exception {
+        register(EMAIL, PASSWORD).andExpect(status().isCreated());
+        String token = tokenFor(EMAIL, PASSWORD);
+        User user = userRepository.findByEmail(EMAIL).orElseThrow();
+        user.setEnabled(false);
+        userRepository.save(user);
+
+        mockMvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.detail").value("This account is disabled"));
     }
 
     @Test

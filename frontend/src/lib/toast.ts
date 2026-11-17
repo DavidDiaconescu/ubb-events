@@ -43,20 +43,26 @@ export function useToasts(): Toast[] {
   );
 }
 
+/** True while an action started with {@link runAction} has not finished. */
+let actionInProgress = false;
+
 /**
  * Runs an API call and reports the outcome with a toast.
- * Resolves to true if the call succeeded. Unexpected errors are re-thrown.
+ * Resolves to true if the call succeeded. While an action runs, further calls are ignored (resolve to false),
+ * so a double click cannot send the same request twice. Unexpected errors are reported as a toast too.
  */
 export async function runAction(action: () => Promise<unknown>, successMessage?: string): Promise<boolean> {
+  if (actionInProgress) return false;
+  actionInProgress = true;
   try {
     await action();
     if (successMessage) showToast(successMessage, "success");
     return true;
   } catch (error) {
-    if (error instanceof ApiError) {
-      showToast(error.message, "error");
-      return false;
-    }
-    throw error;
+    if (!(error instanceof ApiError)) console.error(error);
+    showToast(error instanceof ApiError ? error.message : "Something went wrong. Please try again.", "error");
+    return false;
+  } finally {
+    actionInProgress = false;
   }
 }

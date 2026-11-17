@@ -55,7 +55,7 @@ function NewVenueForm() {
         </Field>
         <Checkbox label="Online venue" checked={values.online} onChange={(e) => setField("online", e.target.checked)} />
         <Field label={values.online ? "Address (optional)" : "Address"} htmlFor="venue-address">
-          <Input id="venue-address" maxLength={255} value={values.address} onChange={(e) => setField("address", e.target.value)} />
+          <Input id="venue-address" maxLength={255} required={!values.online} value={values.address} onChange={(e) => setField("address", e.target.value)} />
         </Field>
         <Field label="Maximum capacity (optional)" htmlFor="venue-capacity">
           <Input
@@ -66,7 +66,7 @@ function NewVenueForm() {
             onChange={(e) => setField("maxCapacity", e.target.value)}
           />
         </Field>
-        <Button type="submit" className="w-full" disabled={values.name.trim() === ""}>
+        <Button type="submit" className="w-full" disabled={values.name.trim() === "" || (!values.online && values.address.trim() === "")}>
           <Plus className="size-4" aria-hidden="true" />
           Add venue
         </Button>

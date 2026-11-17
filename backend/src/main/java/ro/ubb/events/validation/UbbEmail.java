@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface UbbEmail {
 
-    String message() default "Adresa de e-mail trebuie să fie una instituțională UBB";
+    String message() default "Use your UBB institutional e-mail address";
 
     Class<?>[] groups() default {};
 

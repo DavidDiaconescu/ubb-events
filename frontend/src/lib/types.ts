@@ -168,7 +168,7 @@ export interface AppNotification {
 export interface Feedback {
   id: number;
   eventId: number;
-  /** Null when the feedback is anonymous (the backend hides the author). */
+  /** Null when the feedback is anonymous, except for its own author (the backend hides it from everyone else). */
   userId: number | null;
   rating: number;
   comment: string | null;

@@ -65,8 +65,7 @@ function PanelContent({ event }: { event: UbbEvent }) {
 function AttendedRegistration({ event, userId }: { event: UbbEvent; userId: number }) {
   const state = useAppState();
   const canGiveFeedback = event.status === "FINISHED" || event.status === "ARCHIVED";
-  // Anonymous reviews come without an author, so they cannot be matched here; the backend
-  // still rejects a second review (BR-24) and the toast explains why.
+  // The backend shows the author of an anonymous review only to the author, so this also finds those.
   const hasGivenFeedback = state.feedback.some((item) => item.eventId === event.id && item.userId === userId);
 
   return (

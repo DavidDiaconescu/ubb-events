@@ -70,12 +70,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @ExceptionHandler(BadCredentialsException.class)
     public ProblemDetail handleBadCredentials(BadCredentialsException exception) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Email sau parolă greșite");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Incorrect e-mail or password");
     }
 
     @ExceptionHandler(DisabledException.class)
     public ProblemDetail handleDisabled(DisabledException exception) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Contul este dezactivat");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "This account is disabled");
     }
 
     /**
@@ -84,13 +84,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ProblemDetail handleAuthentication(AuthenticationException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED,
-                "Autentificarea este necesară sau token-ul este invalid ori expirat");
+                "Sign-in required, or the token is invalid or expired");
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDenied(AccessDeniedException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN,
-                "Nu ai permisiunea pentru această operație");
+                "You are not allowed to perform this operation");
     }
 
     /**
